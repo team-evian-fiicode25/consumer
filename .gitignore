@@ -1,0 +1,47 @@
+# Flutter/Dart/Pub related
+# Build outputs
+**/build/
+# Dart tool directory
+.dart_tool/
+# Flutter plugin dependency files
+.flutter-plugins
+.flutter-plugins-dependencies
+# Package configuration file
+.packages
+
+# Flutter version management (FVM)
+.fvm/
+
+# iOS specific
+# CocoaPods
+ios/Pods/
+# Flutter frameworks and generated files
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/Flutter/App.framework
+# Xcode workspace and user-specific settings
+ios/Runner.xcodeproj/project.xcworkspace/
+ios/Runner.xcodeproj/xcuserdata/
+*.xcuserstate
+
+# Android specific
+# Gradle build and cache directories
+android/.gradle/
+android/app/build/
+android/build/
+# Local configuration file (contains SDK path, etc.)
+android/local.properties
+
+# IDEs and Editors
+# IntelliJ / Android Studio
+.idea/
+*.iml
+# VS Code
+.vscode/
+
+# Operating System files
+.DS_Store
+Thumbs.db
+
+# Logs and temporary files
+*.log
