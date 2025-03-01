@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'screens/auth/login_page.dart';
-import 'screens/auth/register_page.dart';
-import 'screens/auth/forgot_password_page.dart';
+import 'router/router.dart';
 
 void main() {
   runApp(const MyApp());
@@ -12,8 +10,9 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return MaterialApp.router(
       title: 'Consumer App',
+      routerConfig: router,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
@@ -79,12 +78,6 @@ class MyApp extends StatelessWidget {
           ),
         ),
       ),
-      home: const LoginPage(),
-      routes: {
-        '/login': (context) => const LoginPage(),
-        '/register': (context) => const RegisterPage(),
-        '/forgot-password': (context) => const ForgotPasswordPage(),
-      },
     );
   }
 }

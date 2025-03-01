@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class ForgotPasswordPage extends StatefulWidget {
   const ForgotPasswordPage({super.key});
@@ -81,6 +82,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                             });
                             // TODO (mihaescuvlad): Implement password reset
                             Future.delayed(const Duration(seconds: 2), () {
+                              if (!mounted) return;
                               setState(() {
                                 _isLoading = false;
                               });
@@ -91,7 +93,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                                   ),
                                 ),
                               );
-                              Navigator.pop(context);
+                              context.goNamed('login');
                             });
                           }
                         },
