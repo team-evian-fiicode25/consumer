@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl_phone_number_input/intl_phone_number_input.dart';
 import 'terms_page.dart';
 
@@ -213,7 +213,7 @@ class _RegisterPageState extends State<RegisterPage> {
         _currentStep -= 1;
       });
     } else {
-      Navigator.pushReplacementNamed(context, '/login');
+      context.goNamed('login');
     }
   }
 

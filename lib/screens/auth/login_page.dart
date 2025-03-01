@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -96,7 +97,7 @@ class _LoginPageState extends State<LoginPage> {
                   alignment: Alignment.centerRight,
                   child: TextButton(
                     onPressed: () {
-                      Navigator.pushNamed(context, '/forgot-password');
+                      context.goNamed('forgot-password');
                     },
                     child: const Text('Forgot Password?'),
                   ),
@@ -140,7 +141,7 @@ class _LoginPageState extends State<LoginPage> {
                     const Text("Don't have an account?"),
                     TextButton(
                       onPressed: () {
-                        Navigator.pushNamed(context, '/register');
+                        context.goNamed('register');
                       },
                       child: const Text('Register'),
                     ),
