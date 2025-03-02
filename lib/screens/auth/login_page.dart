@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/services/auth_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -13,6 +14,7 @@ class _LoginPageState extends State<LoginPage> {
   bool _isPasswordVisible = false;
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final authService = AuthService();
 
   @override
   void dispose() {
@@ -104,9 +106,20 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 const SizedBox(height: 16),
                 ElevatedButton(
-                  onPressed: () {
+                  onPressed: () async {
                     if (_formKey.currentState!.validate()) {
-                      // TODO (mihaescuvlad): Implement login logic
+                      bool isLoggedIn = await authService.login(
+                          _emailController.text,
+                          _passwordController.text
+                      );
+
+                      if (isLoggedIn) {
+                        context.goNamed('home');
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text("Login failed. Please try again."))
+                        );
+                      }
                     }
                   },
                   style: ElevatedButton.styleFrom(

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl_phone_number_input/intl_phone_number_input.dart';
 import 'terms_page.dart';
+import '../../core/services/auth_service.dart';
+
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -11,6 +13,8 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
+  final authService = AuthService();
+
   final _formKey = GlobalKey<FormState>();
   bool _isPasswordVisible = false;
   bool _isConfirmPasswordVisible = false;
@@ -202,7 +206,7 @@ class _RegisterPageState extends State<RegisterPage> {
       }
     } else {
       if (_validateCurrentStep() && _acceptedTerms) {
-        // TODO (mihaescuvlad): Implement register
+        authService.register(_usernameController.text, _emailController.text, _passwordController.text, _nicknameController.text, _phoneController.text);
       }
     }
   }
