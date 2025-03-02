@@ -2,6 +2,7 @@ import 'package:go_router/go_router.dart';
 import '../screens/auth/forgot_password_page.dart';
 import '../screens/auth/login_page.dart';
 import '../screens/auth/register_page.dart';
+import '../screens/home/home.dart';
 
 final router = GoRouter(
   routes: [
@@ -19,6 +20,11 @@ final router = GoRouter(
       path: '/forgot-password',
       name: 'forgot-password',
       builder: (context, state) => const ForgotPasswordPage(),
+    ),
+    GoRoute(
+      path: '/home',
+      name: 'home',
+      builder: (context, state) => const HomePage(),
     ),
   ],
 );
