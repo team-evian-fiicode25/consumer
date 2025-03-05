@@ -1,14 +1,15 @@
-import '../models/user_profile.dart';
-import '../models/user_register.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'http_service.dart' as http;
+import '../models/user_register.dart';
 
 const String loginEndpoint = "/auth/login";
 const String registerEndpoint = "/auth/register";
 
 class AuthService {
   final http.HttpService httpService = http.HttpService();
+  final FlutterSecureStorage secureStorage = const FlutterSecureStorage();
 
-  Future<UserProfile> login(String identifier, String password) async {
+  Future<String> login(String identifier, String password) async {
     final response = await httpService.request(
       endpoint: loginEndpoint,
       method: 'POST',
@@ -16,15 +17,21 @@ class AuthService {
     );
 
     final Map<String, dynamic> data = response;
-
     if (data.containsKey("error")) {
       throw Exception(data["error"]);
     }
 
-    return UserProfile.fromJson(data);
+    final String? sessionToken = data["session_id"];
+    if (sessionToken == null) {
+      throw Exception("No session token received");
+    }
+
+    await secureStorage.write(key: "session_id", value: sessionToken);
+
+    return sessionToken;
   }
 
-  Future<UserProfile> register(UserRegister user) async {
+  Future<String> register(UserRegister user) async {
     final response = await httpService.request(
       endpoint: registerEndpoint,
       method: 'POST',
@@ -32,11 +39,25 @@ class AuthService {
     );
 
     final Map<String, dynamic> data = response;
-
     if (data.containsKey("error")) {
       throw Exception(data["error"]);
     }
 
-    return UserProfile.fromJson(data);
+    final String? sessionToken = data["session_id"];
+    if (sessionToken == null) {
+      throw Exception("No session token received");
+    }
+
+    await secureStorage.write(key: "session_id", value: sessionToken);
+
+    return sessionToken;
+  }
+
+  Future<String?> getSessionToken() async {
+    return await secureStorage.read(key: "session_id");
+  }
+
+  Future<void> clearSession() async {
+    await secureStorage.delete(key: "session_id");
   }
 }

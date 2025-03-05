@@ -11,12 +11,12 @@ class AuthInitial extends AuthState {}
 class AuthLoading extends AuthState {}
 
 class AuthAuthenticated extends AuthState {
-  final UserProfile user;
+  final String sessionId;
 
-  AuthAuthenticated(this.user);
+  AuthAuthenticated(this.sessionId);
 
   @override
-  List<Object> get props => [user];
+  List<Object> get props => [sessionId];
 }
 
 class AuthFailure extends AuthState {

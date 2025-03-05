@@ -9,10 +9,17 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   @override
-  Widget build(Object context) {
-    // TODO: implement build
-    throw UnimplementedError();
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Home'),
+        centerTitle: true,
+      ),
+      body: const Center(
+        child: Text(
+          'Merge Auth-ul'
+        ),
+      ),
+    );
   }
-
-
 }
