@@ -7,6 +7,8 @@ import '../../bloc/auth/auth_bloc.dart';
 import '../../bloc/auth/auth_event.dart';
 import '../../bloc/auth/auth_state.dart';
 import '../../core/models/user_register.dart';
+import '../widgets/custom_text_field.dart';
+import '../widgets/gradient_background.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({Key? key}) : super(key: key);
@@ -49,8 +51,7 @@ class _RegisterPageState extends State<RegisterPage> {
           username: _usernameController.text,
           email: _emailController.text,
           password: _passwordController.text,
-          phoneNumber:
-          _phoneController.text.isEmpty ? null : _phoneController.text,
+          phoneNumber: _phoneController.text.isEmpty ? null : _phoneController.text,
         );
         context.read<AuthBloc>().add(RegisterRequested(user));
       }
@@ -83,33 +84,15 @@ class _RegisterPageState extends State<RegisterPage> {
     );
   }
 
-  Widget _buildGradientBackground() {
-    return Positioned(
-      top: 0,
-      left: 0,
-      right: 0,
-      child: Container(
-        height: 280,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Colors.purple, Colors.deepPurple],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.only(
-            bottomLeft: Radius.circular(80),
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildCloseButton() {
     return SafeArea(
       child: Align(
         alignment: Alignment.topRight,
         child: IconButton(
-          icon: const Icon(Icons.close, color: Colors.white),
+          icon: Icon(
+            Icons.close,
+            color: Theme.of(context).colorScheme.onPrimary,
+          ),
           onPressed: () => context.goNamed('landing-page'),
         ),
       ),
@@ -117,12 +100,8 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 
   Widget _buildHeader() {
-    final title = _currentStep == 0
-        ? 'Create an Account'
-        : 'Complete Your Profile';
-    final subtitle = _currentStep == 0
-        ? 'Enter your email'
-        : 'Fill out the rest of your details';
+    final title = _currentStep == 0 ? 'Create an Account' : 'Complete Your Profile';
+    final subtitle = _currentStep == 0 ? 'Enter your email' : 'Fill out the rest of your details';
 
     return Column(
       children: [
@@ -130,16 +109,13 @@ class _RegisterPageState extends State<RegisterPage> {
           title,
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
             fontWeight: FontWeight.bold,
-            color: Colors.white,
           ),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 8),
         Text(
           subtitle,
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-            color: Colors.white70,
-          ),
+          style: Theme.of(context).textTheme.bodyLarge,
           textAlign: TextAlign.center,
         ),
       ],
@@ -149,8 +125,10 @@ class _RegisterPageState extends State<RegisterPage> {
   Widget _buildEmailStep() {
     return Column(
       children: [
-        TextFormField(
+        CustomTextField(
           controller: _emailController,
+          label: 'Email',
+          icon: Icons.email_outlined,
           validator: (value) {
             if (value == null || value.isEmpty) {
               return 'Please enter your email';
@@ -161,10 +139,6 @@ class _RegisterPageState extends State<RegisterPage> {
             }
             return null;
           },
-          decoration: const InputDecoration(
-            labelText: 'Email',
-            prefixIcon: Icon(Icons.email_outlined),
-          ),
         ),
         const SizedBox(height: 16),
         Text.rich(
@@ -292,19 +266,33 @@ class _RegisterPageState extends State<RegisterPage> {
                 ),
             ],
           ),
+          const SizedBox(height: 16),
+          _buildSignInLink(context),
         ],
       ),
+    );
+  }
+
+  Widget _buildSignInLink(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Text("Already have an account?"),
+        TextButton(
+          onPressed: () => context.goNamed('login'),
+          child: const Text('Sign In'),
+        ),
+      ],
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Stack(
         children: [
-          _buildGradientBackground(),
-          _buildCloseButton(),
+          const GradientBackground(),
           SafeArea(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(24.0),
@@ -324,9 +312,9 @@ class _RegisterPageState extends State<RegisterPage> {
                     builder: (context, state) {
                       return Column(
                         children: [
-                          const SizedBox(height: 60),
+                          const SizedBox(height: 100),
                           _buildHeader(),
-                          const SizedBox(height: 40),
+                          const SizedBox(height: 180),
                           _buildFormContent(),
                         ],
                       );
@@ -336,6 +324,7 @@ class _RegisterPageState extends State<RegisterPage> {
               ),
             ),
           ),
+          _buildCloseButton(),
         ],
       ),
     );

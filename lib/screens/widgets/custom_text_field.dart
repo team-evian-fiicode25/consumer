@@ -26,17 +26,17 @@ class CustomTextField extends StatelessWidget {
       controller: controller,
       obscureText: isPassword ? !isPasswordVisible : false,
       decoration: InputDecoration(
+        filled: false,
         labelText: label,
+        border: UnderlineInputBorder(),
+        focusedBorder: UnderlineInputBorder(),
         prefixIcon: Icon(icon),
         suffixIcon: isPassword
             ? IconButton(
-          icon: Icon(isPasswordVisible ? Icons.visibility_off : Icons.visibility),
-          onPressed: onToggleVisibility,
-        )
+              icon: Icon(isPasswordVisible ? Icons.visibility_off : Icons.visibility),
+              onPressed: onToggleVisibility,
+            )
             : null,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
       ),
       validator: validator,
     );

@@ -6,6 +6,7 @@ import '../../bloc/auth/auth_event.dart';
 import '../../bloc/auth/auth_state.dart';
 import '../widgets/custom_text_field.dart';
 import '../widgets/custom_button.dart';
+import '../widgets/gradient_background.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -40,7 +41,7 @@ class _LoginPageState extends State<LoginPage> {
     return Scaffold(
       body: Stack(
         children: [
-          _buildBackground(),
+          GradientBackground(),
           SafeArea(
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(24.0),
@@ -60,9 +61,9 @@ class _LoginPageState extends State<LoginPage> {
                     return Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const SizedBox(height: 80),
+                        const SizedBox(height: 100),
                         _buildHeader(context),
-                        const SizedBox(height: 40),
+                        const SizedBox(height: 180),
                         _buildLoginForm(context, state),
                         const SizedBox(height: 24),
                         _buildRegisterLink(context),
@@ -78,27 +79,6 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
-  Widget _buildBackground() {
-    return Positioned(
-      top: 0,
-      left: 0,
-      right: 0,
-      child: Container(
-        height: 280,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Colors.purple, Colors.deepPurple],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.only(
-            bottomLeft: Radius.circular(80),
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildHeader(BuildContext context) {
     return Column(
       children: [
@@ -106,16 +86,13 @@ class _LoginPageState extends State<LoginPage> {
           'Welcome Back!',
           style: Theme.of(context).textTheme.headlineMedium?.copyWith(
             fontWeight: FontWeight.bold,
-            color: Colors.white,
           ),
           textAlign: TextAlign.center,
         ),
         const SizedBox(height: 8),
         Text(
           'Sign in to continue',
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-            color: Colors.white70,
-          ),
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(),
           textAlign: TextAlign.center,
         ),
       ],

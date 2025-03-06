@@ -1,10 +1,12 @@
 import 'dart:convert';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 
 const String defaultUrl = "http://10.0.2.2:8000/api/consumer";
 
 class HttpService {
   final String baseUrl;
+  final FlutterSecureStorage secureStorage = const FlutterSecureStorage();
 
   HttpService({this.baseUrl = defaultUrl});
 
@@ -19,6 +21,11 @@ class HttpService {
     headers ??= {
       'Content-Type': 'application/json',
     };
+
+    final sessionToken = await secureStorage.read(key: 'session_id');
+    if (sessionToken != null && sessionToken.isNotEmpty) {
+      headers['Session-Id'] = sessionToken;
+    }
 
     http.Response response;
 
