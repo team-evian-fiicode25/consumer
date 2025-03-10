@@ -1,0 +1,28 @@
+services:
+  api:
+    build: .
+    environment:
+      AUTH_URL: "http://auth-service:8080/graphql"
+    ports:
+      - '8000:8000'
+
+
+  auth-service:
+    image: ghcr.io/team-evian-fiicode25/authentication:v0.6.0
+    environment:
+      MANDATORYFIELDS__USERNAME: '1'
+      MANDATORYFIELDS__PHONENUMBER: '0'
+      MANDATORYFIELDS__EMAIL: '1'
+      DATABASETYPE: mongo
+      MONGO__HOSTNAME: mongo
+      MONGO__PORT: 27017
+      MONGO__USER: root
+      MONGO__PASSWORD: root
+      MONGO__DATABASE: auth
+
+  mongo:
+    image: mongo
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: root
