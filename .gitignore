@@ -34,14 +34,51 @@ frontend/android/local.properties
 
 # IDEs and Editors
 # IntelliJ / Android Studio
-.idea/
-*.iml
+frontend/.idea/
+frontend/*.iml
 # VS Code
-.vscode/
+frontend/.vscode/
 
 # Operating System files
-.DS_Store
-Thumbs.db
+frontend/.DS_Store
+frontend/Thumbs.db
 
 # Logs and temporary files
 frontend/*.log
+
+# Go-related files
+API/*.exe
+API/*.out
+API/*.test
+API/*.log
+
+# Build artifacts
+API/bin/
+API/obj/
+API/dist/
+API/build/
+API/tmp/
+API/*.o
+API/*.a
+API/*.so
+API/*.dll
+
+# Dependency directories
+API/vendor/
+API/go.sum
+API/go.work.sum
+
+# IDE and editor files
+API/.idea/
+API/.vscode/
+API/*.swp
+API/*.swo
+
+# OS-specific files
+API/.DS_Store
+API/Thumbs.db
+API/*.bak
+
+# Docker-related files (optional)
+API/.dockerignore
+API/docker-compose.override.yml

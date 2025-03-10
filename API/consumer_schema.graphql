@@ -1,0 +1,108 @@
+schema {
+  query: Query
+  mutation: Mutation
+}
+
+interface IQueryableEmail {
+  address: String!
+  isVerified: Boolean!
+}
+
+interface IQueryableLogin {
+  verifyPassword(password: String!): Boolean!
+  id: String!
+  username: String
+  email: IQueryableEmail
+  phoneNumber: IQueryablePhoneNumber
+  createdAt: String!
+  updatedAt: String!
+}
+
+interface IQueryableLoginSession {
+  id: String!
+  identifyingToken: String!
+  timeLeftSeconds: Int!
+  available2FAOptions: [TwoFactorMean!]!
+  solved2FAOptions: [TwoFactorMean!]!
+  loginId: String!
+  login: IQueryableLogin!
+  isSolved: Boolean!
+  createdAt: String!
+  updatedAt: String!
+}
+
+interface IQueryablePhoneNumber {
+  number: String!
+  isVerified: Boolean!
+}
+
+type Mutation {
+  createLogin(
+    username: String
+    email: String
+    phoneNumber: String
+    password: String!
+  ): IQueryableLogin!
+  removeLogin(
+    id: String
+    username: String
+    email: String
+    phone: String
+  ): IQueryableLogin
+  logInWithPassword(
+    id: String
+    username: String
+    email: String
+    phone: String
+    password: String!
+  ): IQueryableLoginSession!
+}
+
+type Query {
+  logins: [IQueryableLogin!]!
+  login(
+    id: String
+    username: String
+    email: String
+    phone: String
+  ): IQueryableLogin
+  loginSession(token: String!): IQueryableLoginSession
+}
+
+type QueryableEmail implements IQueryableEmail {
+  address: String!
+  isVerified: Boolean!
+}
+
+type QueryableLogin implements IQueryableLogin {
+  verifyPassword(password: String!): Boolean!
+  id: String!
+  username: String
+  createdAt: String!
+  updatedAt: String!
+  email: IQueryableEmail
+  phoneNumber: IQueryablePhoneNumber
+}
+
+type QueryableLoginSession implements IQueryableLoginSession {
+  id: String!
+  loginId: String!
+  identifyingToken: String!
+  isSolved: Boolean!
+  createdAt: String!
+  updatedAt: String!
+  timeLeftSeconds: Int!
+  solved2FAOptions: [TwoFactorMean!]!
+  available2FAOptions: [TwoFactorMean!]!
+  login: IQueryableLogin!
+}
+
+type QueryablePhoneNumber implements IQueryablePhoneNumber {
+  number: String!
+  isVerified: Boolean!
+}
+
+enum TwoFactorMean {
+  EMAIL
+  PHONE
+}
