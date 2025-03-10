@@ -2,18 +2,25 @@ package services
 
 import (
 	"context"
+	"log"
 	"net/http"
 
 	"github.com/Khan/genqlient/graphql"
+	"github.com/team-evian-fiicode25/consumer/API/internal/config"
 )
 
 type AuthService struct {
 	client graphql.Client
 }
 
-func NewAuthService(endpoint string) *AuthService {
+func NewAuthService() *AuthService {
+    url, err := config.GetConfig().AuthServiceUrl();
+    if err != nil{
+        log.Fatalln(err.Error())
+    }
+
 	return &AuthService{
-		client: graphql.NewClient(endpoint, http.DefaultClient),
+		client: graphql.NewClient(url, http.DefaultClient),
 	}
 }
 

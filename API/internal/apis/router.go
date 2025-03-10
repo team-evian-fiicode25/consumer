@@ -10,7 +10,7 @@ import (
 func SetupRoutes() {
 	mux := http.NewServeMux()
 
-	consumerService := services.NewAuthService("http://localhost:8080/graphql")
+	consumerService := services.NewAuthService()
 
 	registerAuthRoutes(mux, "/", handlers.NewAuthHandler(consumerService))
 
