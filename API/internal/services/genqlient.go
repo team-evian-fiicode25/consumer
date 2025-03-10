@@ -1421,16 +1421,16 @@ func (v *__GetLoginInput) GetUsername() string { return v.Username }
 
 // __LogInWithPasswordInput is used internally by genqlient
 type __LogInWithPasswordInput struct {
-	Email    *string `json:"email"`
-	Username *string `json:"username"`
+	Email    string `json:"email"`
+	Username string `json:"username"`
 	Password string `json:"password"`
 }
 
 // GetEmail returns __LogInWithPasswordInput.Email, and is useful for accessing the field via an interface.
-func (v *__LogInWithPasswordInput) GetEmail() *string { return v.Email }
+func (v *__LogInWithPasswordInput) GetEmail() string { return v.Email }
 
 // GetUsername returns __LogInWithPasswordInput.Username, and is useful for accessing the field via an interface.
-func (v *__LogInWithPasswordInput) GetUsername() *string { return v.Username }
+func (v *__LogInWithPasswordInput) GetUsername() string { return v.Username }
 
 // GetPassword returns __LogInWithPasswordInput.Password, and is useful for accessing the field via an interface.
 func (v *__LogInWithPasswordInput) GetPassword() string { return v.Password }
@@ -1443,7 +1443,7 @@ type __RemoveLoginInput struct {
 // GetId returns __RemoveLoginInput.Id, and is useful for accessing the field via an interface.
 func (v *__RemoveLoginInput) GetId() string { return v.Id }
 
-// The query or mutation executed by CreateLogin.
+// The mutation executed by CreateLogin.
 const CreateLogin_Operation = `
 mutation CreateLogin ($username: String, $email: String, $phoneNumber: String, $password: String!) {
 	newLogin: createLogin(username: $username, email: $email, phoneNumber: $phoneNumber, password: $password) {
@@ -1461,7 +1461,7 @@ func CreateLogin(
 	email string,
 	phoneNumber string,
 	password string,
-) (*CreateLoginResponse, error) {
+) (data_ *CreateLoginResponse, err_ error) {
 	req_ := &graphql.Request{
 		OpName: "CreateLogin",
 		Query:  CreateLogin_Operation,
@@ -1472,10 +1472,9 @@ func CreateLogin(
 			Password:    password,
 		},
 	}
-	var err_ error
 
-	var data_ CreateLoginResponse
-	resp_ := &graphql.Response{Data: &data_}
+	data_ = &CreateLoginResponse{}
+	resp_ := &graphql.Response{Data: data_}
 
 	err_ = client_.MakeRequest(
 		ctx_,
@@ -1483,10 +1482,10 @@ func CreateLogin(
 		resp_,
 	)
 
-	return &data_, err_
+	return data_, err_
 }
 
-// The query or mutation executed by GetAllLogins.
+// The query executed by GetAllLogins.
 const GetAllLogins_Operation = `
 query GetAllLogins {
 	logins {
@@ -1512,15 +1511,14 @@ query GetAllLogins {
 func GetAllLogins(
 	ctx_ context.Context,
 	client_ graphql.Client,
-) (*GetAllLoginsResponse, error) {
+) (data_ *GetAllLoginsResponse, err_ error) {
 	req_ := &graphql.Request{
 		OpName: "GetAllLogins",
 		Query:  GetAllLogins_Operation,
 	}
-	var err_ error
 
-	var data_ GetAllLoginsResponse
-	resp_ := &graphql.Response{Data: &data_}
+	data_ = &GetAllLoginsResponse{}
+	resp_ := &graphql.Response{Data: data_}
 
 	err_ = client_.MakeRequest(
 		ctx_,
@@ -1528,10 +1526,10 @@ func GetAllLogins(
 		resp_,
 	)
 
-	return &data_, err_
+	return data_, err_
 }
 
-// The query or mutation executed by GetLogin.
+// The query executed by GetLogin.
 const GetLogin_Operation = `
 query GetLogin ($username: String!) {
 	login(username: $username) {
@@ -1558,7 +1556,7 @@ func GetLogin(
 	ctx_ context.Context,
 	client_ graphql.Client,
 	username string,
-) (*GetLoginResponse, error) {
+) (data_ *GetLoginResponse, err_ error) {
 	req_ := &graphql.Request{
 		OpName: "GetLogin",
 		Query:  GetLogin_Operation,
@@ -1566,10 +1564,9 @@ func GetLogin(
 			Username: username,
 		},
 	}
-	var err_ error
 
-	var data_ GetLoginResponse
-	resp_ := &graphql.Response{Data: &data_}
+	data_ = &GetLoginResponse{}
+	resp_ := &graphql.Response{Data: data_}
 
 	err_ = client_.MakeRequest(
 		ctx_,
@@ -1577,10 +1574,10 @@ func GetLogin(
 		resp_,
 	)
 
-	return &data_, err_
+	return data_, err_
 }
 
-// The query or mutation executed by LogInWithPassword.
+// The mutation executed by LogInWithPassword.
 const LogInWithPassword_Operation = `
 mutation LogInWithPassword ($email: String, $username: String, $password: String!) {
 	loginSession: logInWithPassword(email: $email, username: $username, password: $password) {
@@ -1595,10 +1592,10 @@ mutation LogInWithPassword ($email: String, $username: String, $password: String
 func LogInWithPassword(
 	ctx_ context.Context,
 	client_ graphql.Client,
-	email *string,
-	username *string,
+	email string,
+	username string,
 	password string,
-) (*LogInWithPasswordResponse, error) {
+) (data_ *LogInWithPasswordResponse, err_ error) {
 	req_ := &graphql.Request{
 		OpName: "LogInWithPassword",
 		Query:  LogInWithPassword_Operation,
@@ -1608,10 +1605,9 @@ func LogInWithPassword(
 			Password: password,
 		},
 	}
-	var err_ error
 
-	var data_ LogInWithPasswordResponse
-	resp_ := &graphql.Response{Data: &data_}
+	data_ = &LogInWithPasswordResponse{}
+	resp_ := &graphql.Response{Data: data_}
 
 	err_ = client_.MakeRequest(
 		ctx_,
@@ -1619,10 +1615,10 @@ func LogInWithPassword(
 		resp_,
 	)
 
-	return &data_, err_
+	return data_, err_
 }
 
-// The query or mutation executed by RemoveLogin.
+// The mutation executed by RemoveLogin.
 const RemoveLogin_Operation = `
 mutation RemoveLogin ($id: String!) {
 	removeLogin(id: $id) {
@@ -1637,7 +1633,7 @@ func RemoveLogin(
 	ctx_ context.Context,
 	client_ graphql.Client,
 	id string,
-) (*RemoveLoginResponse, error) {
+) (data_ *RemoveLoginResponse, err_ error) {
 	req_ := &graphql.Request{
 		OpName: "RemoveLogin",
 		Query:  RemoveLogin_Operation,
@@ -1645,10 +1641,9 @@ func RemoveLogin(
 			Id: id,
 		},
 	}
-	var err_ error
 
-	var data_ RemoveLoginResponse
-	resp_ := &graphql.Response{Data: &data_}
+	data_ = &RemoveLoginResponse{}
+	resp_ := &graphql.Response{Data: data_}
 
 	err_ = client_.MakeRequest(
 		ctx_,
@@ -1656,5 +1651,5 @@ func RemoveLogin(
 		resp_,
 	)
 
-	return &data_, err_
+	return data_, err_
 }
