@@ -64,7 +64,6 @@ API/*.dll
 
 # Dependency directories
 API/vendor/
-API/go.sum
 API/go.work.sum
 
 # IDE and editor files
