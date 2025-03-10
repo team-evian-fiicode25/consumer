@@ -1,0 +1,56 @@
+query GetLogin($username: String!) {
+  login(username: $username) {
+    id
+    username
+    createdAt
+    updatedAt
+    email {
+      address
+      isVerified
+    }
+    phoneNumber {
+      number
+      isVerified
+    }
+  }
+}
+
+query GetAllLogins {
+  logins {
+    id
+    username
+    createdAt
+    updatedAt
+    email {
+      address
+      isVerified
+    }
+    phoneNumber {
+      number
+      isVerified
+    }
+  }
+}
+
+mutation RemoveLogin($id: String!) {
+  removeLogin(id: $id) {
+    id
+    username
+  }
+}
+
+mutation CreateLogin($username: String, $email: String, $phoneNumber: String, $password: String!) {
+  newLogin: createLogin(username: $username, email: $email, phoneNumber: $phoneNumber, password: $password) {
+    id
+    username
+  }
+}
+
+mutation LogInWithPassword($email: String, $username: String, $password: String!) {
+  loginSession: logInWithPassword(email: $email, username: $username, password: $password) {
+    id
+    identifyingToken
+    isSolved
+  }
+}
+
