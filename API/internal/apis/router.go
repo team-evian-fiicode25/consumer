@@ -12,12 +12,12 @@ func SetupRoutes() {
 
 	consumerService := services.NewAuthService()
 
-	registerAuthRoutes(mux, "/", handlers.NewAuthHandler(consumerService))
+	registerAuthRoutes(mux, handlers.NewAuthHandler(consumerService))
 
 	http.ListenAndServe(":8000", mux)
 }
 
-func registerAuthRoutes(mux *http.ServeMux, basePath string, handler *handlers.AuthHandler) {
-	mux.HandleFunc(basePath+"/auth/register", handler.Register)
-	mux.HandleFunc(basePath+"/auth/login", handler.Login)
+func registerAuthRoutes(mux *http.ServeMux, handler *handlers.AuthHandler) {
+	mux.HandleFunc("/auth/register", handler.Register)
+	mux.HandleFunc("/auth/login", handler.Login)
 }
