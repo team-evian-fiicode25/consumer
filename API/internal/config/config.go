@@ -5,9 +5,7 @@ import (
 	"os"
 )
 
-type EnvConfig struct{}
-
-func (*EnvConfig) AuthServiceUrl() (string, error){
+func AuthServiceUrl() (string, error){
     const envName = "AUTH_URL"
     var url string = os.Getenv(envName)
 
