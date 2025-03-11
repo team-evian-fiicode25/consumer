@@ -14,7 +14,7 @@ type AuthService struct {
 }
 
 func NewAuthService() *AuthService {
-    url, err := config.GetConfig().AuthServiceUrl();
+    url, err := config.AuthServiceUrl();
     if err != nil{
         log.Fatalln(err.Error())
     }
