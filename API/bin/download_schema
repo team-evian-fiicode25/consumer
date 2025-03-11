@@ -2,7 +2,7 @@
 
 IMAGE='ghcr.io/team-evian-fiicode25/authentication'
 
-cd "$(dirname $0)/.."
+cd "$(dirname "$0")/.."
 
 if [[ $# -ne 1 ]]; then
     >&2 echo "Usage: $0 VERSION"
