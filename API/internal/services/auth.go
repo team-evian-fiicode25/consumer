@@ -32,17 +32,20 @@ func (s *AuthService) CreateLogin(ctx context.Context, username, email, phone_nu
 	return resp, nil
 }
 
-func (s *AuthService) LogInWithPassword(ctx context.Context, identifier string, password string) (*LogInWithPasswordResponse, error) {
-	var response *LogInWithPasswordResponse
-	var err error
+func (s *AuthService) LogInWithPassword(ctx context.Context, identifier string, password string) (string, error) {
 	if isValidEmail(identifier) {
-		response, err = LogInWithPassword(ctx, s.client, &identifier, nil, password)
-	} else {
-		response, err = LogInWithPassword(ctx, s.client, nil, &identifier, password)
-	}
+        response, err := LogInWithEmail(ctx, s.client, identifier, password)
+        if err != nil{ 
+            return  "", err
+        }
 
-	if err != nil {
-		return nil, err
-	}
-	return response, nil
+        return response.LoginSession.GetSessionToken().GetToken(), nil;
+	} 
+
+    response, err := LogInWithUsername(ctx, s.client, identifier, password)
+    if err != nil{
+        return "", err
+    }
+
+    return response.LoginSession.GetSessionToken().GetToken(), nil;
 }

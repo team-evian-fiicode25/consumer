@@ -63,7 +63,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	loginSession, err := h.consumerService.LogInWithPassword(context.Background(), request.Identifier, request.Password)
+	sessionToken, err := h.consumerService.LogInWithPassword(context.Background(), request.Identifier, request.Password)
 	if err != nil {
 		response.Error = err.Error()
 
@@ -73,8 +73,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response = models.AuthResponse{
-		Id:         loginSession.LoginSession.GetId(),
-		Session_id: loginSession.LoginSession.GetIdentifyingToken(),
+		Session_id: sessionToken,
 	}
 
 	w.WriteHeader(http.StatusOK)
