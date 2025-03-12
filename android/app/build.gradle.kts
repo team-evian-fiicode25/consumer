@@ -1,3 +1,6 @@
+import java.util.Properties
+import java.io.FileInputStream
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
@@ -8,7 +11,15 @@ plugins {
 android {
     namespace = "com.example.mobile_ui"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    ndkVersion = "27.0.12077973"
+
+    val localProperties = Properties()
+    val localPropertiesFile = rootProject.file("local.properties")
+    if (localPropertiesFile.exists()) {
+        localProperties.load(FileInputStream(localPropertiesFile))
+    }
+
+    val googleApiKey = localProperties.getProperty("GOOGLE_API_KEY") ?: ""
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -24,10 +35,11 @@ android {
         applicationId = "com.example.mobile_ui"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        minSdk = 21
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        manifestPlaceholders["googleApiKey"] = googleApiKey
     }
 
     buildTypes {
