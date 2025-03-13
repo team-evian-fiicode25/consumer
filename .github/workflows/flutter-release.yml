@@ -66,15 +66,16 @@ jobs:
           echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> android/key.properties
           echo "storeFile=keystore.jks" >> android/key.properties
         
-      - name: Build IPA
-        working-directory: ${{ steps.get_build_context.outputs.build_context }}
-        run: flutter build ipa --no-codesign
-
-      - name: Compress Archives and IPAs
-        working-directory: ${{ steps.get_build_context.outputs.build_context }}
-        run: |
-          cd build
-          tar -czf ios_build.tar.gz ios
+      # TODO: Fix building on IOS
+      # - name: Build IPA
+      #   working-directory: ${{ steps.get_build_context.outputs.build_context }}
+      #   run: flutter build ipa --no-codesign
+      #
+      # - name: Compress Archives and IPAs
+      #   working-directory: ${{ steps.get_build_context.outputs.build_context }}
+      #   run: |
+      #     cd build
+      #     tar -czf ios_build.tar.gz ios
 
       - name: Build APK
         working-directory: ${{ steps.get_build_context.outputs.build_context }}
@@ -104,12 +105,12 @@ jobs:
           asset_name: mobile-client-play-store.aab
           asset_content_type: application/x-authorware-bin
 
-      - name: Upload ipa to release
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ env.UPLOAD_URL }}
-          asset_path: ${{ steps.get_build_context.outputs.build_context }}/build/ios_build.tar.gz
-          asset_name: mobile-client-ios.tar.gz
-          asset_content_type: application/x-compressed-tar
+      # - name: Upload ipa to release
+      #   uses: actions/upload-release-asset@v1
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   with:
+      #     upload_url: ${{ env.UPLOAD_URL }}
+      #     asset_path: ${{ steps.get_build_context.outputs.build_context }}/build/ios_build.tar.gz
+      #     asset_name: mobile-client-ios.tar.gz
+      #     asset_content_type: application/x-compressed-tar
