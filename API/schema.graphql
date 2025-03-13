@@ -1,0 +1,104 @@
+schema {
+  query: Query
+  mutation: Mutation
+}
+
+interface IQueryableEmail {
+  address: String!
+  isVerified: Boolean!
+}
+
+interface IQueryableLogin {
+  verifyPassword(password: String!): Boolean!
+  id: String!
+  username: String
+  email: IQueryableEmail
+  phoneNumber: IQueryablePhoneNumber
+  createdAt: String!
+  updatedAt: String!
+}
+
+interface IQueryableLoginSession {
+  id: String!
+  identifyingToken: String!
+  timeLeftSeconds: Int!
+  available2FAOptions: [TwoFactorMean!]!
+  solved2FAOptions: [TwoFactorMean!]!
+  loginId: String!
+  login: IQueryableLogin!
+  isSolved: Boolean!
+  sessionToken: IQueryableSessionToken
+  createdAt: String!
+  updatedAt: String!
+}
+
+interface IQueryablePhoneNumber {
+  number: String!
+  isVerified: Boolean!
+}
+
+interface IQueryableSessionToken {
+  token: String!
+  expiresInSeconds: Int!
+  login: IQueryableLogin!
+}
+
+type Mutation {
+  createLogin(username: String email: String phoneNumber: String password: String!): IQueryableLogin! @cost(weight: "10")
+  removeLogin(id: String username: String email: String phone: String sessionToken: String): IQueryableLogin @cost(weight: "10")
+  logInWithPassword(id: String username: String email: String phone: String password: String!): IQueryableLoginSession! @cost(weight: "10")
+}
+
+type Query {
+  logins: [IQueryableLogin!]!
+  login(id: String username: String email: String phone: String sessionToken: String): IQueryableLogin @cost(weight: "10")
+  loginSession(token: String!): IQueryableLoginSession @cost(weight: "10")
+}
+
+type QueryableEmail implements IQueryableEmail {
+  address: String!
+  isVerified: Boolean!
+}
+
+type QueryableLogin implements IQueryableLogin {
+  verifyPassword(password: String!): Boolean!
+  id: String!
+  username: String
+  createdAt: String!
+  updatedAt: String!
+  email: IQueryableEmail
+  phoneNumber: IQueryablePhoneNumber
+}
+
+type QueryableLoginSession implements IQueryableLoginSession {
+  id: String!
+  loginId: String!
+  identifyingToken: String!
+  isSolved: Boolean!
+  createdAt: String!
+  updatedAt: String!
+  timeLeftSeconds: Int!
+  solved2FAOptions: [TwoFactorMean!]!
+  available2FAOptions: [TwoFactorMean!]!
+  login: IQueryableLogin! @cost(weight: "10")
+  sessionToken: IQueryableSessionToken @cost(weight: "10")
+}
+
+type QueryablePhoneNumber implements IQueryablePhoneNumber {
+  number: String!
+  isVerified: Boolean!
+}
+
+type QueryableSessionToken implements IQueryableSessionToken {
+  token: String!
+  expiresInSeconds: Int!
+  login: IQueryableLogin! @cost(weight: "10")
+}
+
+enum TwoFactorMean {
+  EMAIL
+  PHONE
+}
+
+"The purpose of the `cost` directive is to define a `weight` for GraphQL types, fields, and arguments. Static analysis can use these weights when calculating the overall cost of a query or response."
+directive @cost("The `weight` argument defines what value to add to the overall cost for every appearance, or possible appearance, of a type, field, argument, etc." weight: String!) on SCALAR | OBJECT | FIELD_DEFINITION | ARGUMENT_DEFINITION | ENUM | INPUT_FIELD_DEFINITION

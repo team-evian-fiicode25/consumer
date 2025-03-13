@@ -1,47 +1,82 @@
 # Flutter/Dart/Pub related
 # Build outputs
-**/build/
+frontend/**/build/
 # Dart tool directory
-.dart_tool/
+frontend/.dart_tool/
 # Flutter plugin dependency files
-.flutter-plugins
-.flutter-plugins-dependencies
+frontend/.flutter-plugins
+frontend/.flutter-plugins-dependencies
 # Package configuration file
-.packages
+frontend/.packages
 
 # Flutter version management (FVM)
-.fvm/
+frontend/.fvm/
 
 # iOS specific
 # CocoaPods
-ios/Pods/
+frontend/ios/Pods/
 # Flutter frameworks and generated files
-ios/Flutter/Flutter.framework
-ios/Flutter/Flutter.podspec
-ios/Flutter/App.framework
+frontend/ios/Flutter/Flutter.framework
+frontend/ios/Flutter/Flutter.podspec
+frontend/ios/Flutter/App.framework
 # Xcode workspace and user-specific settings
-ios/Runner.xcodeproj/project.xcworkspace/
-ios/Runner.xcodeproj/xcuserdata/
-*.xcuserstate
+frontend/ios/Runner.xcodeproj/project.xcworkspace/
+frontend/ios/Runner.xcodeproj/xcuserdata/
+frontend/*.xcuserstate
 
 # Android specific
 # Gradle build and cache directories
-android/.gradle/
-android/app/build/
-android/build/
+frontend/android/.gradle/
+frontend/android/app/build/
+frontend/android/build/
 # Local configuration file (contains SDK path, etc.)
-android/local.properties
+frontend/android/local.properties
 
 # IDEs and Editors
 # IntelliJ / Android Studio
-.idea/
-*.iml
+frontend/.idea/
+frontend/*.iml
 # VS Code
-.vscode/
+frontend/.vscode/
 
 # Operating System files
-.DS_Store
-Thumbs.db
+frontend/.DS_Store
+frontend/Thumbs.db
 
 # Logs and temporary files
-*.log
+frontend/*.log
+
+# Go-related files
+API/*.exe
+API/*.out
+API/*.test
+API/*.log
+
+# Build artifacts
+API/obj/
+API/dist/
+API/build/
+API/tmp/
+API/*.o
+API/*.a
+API/*.so
+API/*.dll
+
+# Dependency directories
+API/vendor/
+API/go.work.sum
+
+# IDE and editor files
+API/.idea/
+API/.vscode/
+API/*.swp
+API/*.swo
+
+# OS-specific files
+API/.DS_Store
+API/Thumbs.db
+API/*.bak
+
+# Docker-related files (optional)
+API/.dockerignore
+API/docker-compose.override.yml

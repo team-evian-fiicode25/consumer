@@ -1,0 +1,22 @@
+mutation CreateLogin($username: String, $email: String, $phoneNumber: String, $password: String!) {
+  newLogin: createLogin(username: $username, email: $email, phoneNumber: $phoneNumber, password: $password) {
+    id
+    username
+  }
+}
+
+mutation LogInWithUsername($username: String!, $password: String!) {
+  loginSession: logInWithPassword(username: $username, password: $password) {
+    sessionToken {
+        token
+    }
+  }
+}
+
+mutation LogInWithEmail($email: String!, $password: String!) {
+  loginSession: logInWithPassword(email: $email, password: $password) {
+    sessionToken {
+        token
+    }
+  }
+}
