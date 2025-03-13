@@ -20,7 +20,7 @@ jobs:
 
       - name: Set version in pubspec.yaml
         run: |
-          VERSION="${TAG#v}"  # Remove the "v" prefix
+          VERSION="${TAG#v}" \
           sed -i'' -E "s/^(version: ).*$/\1${VERSION}/" pubspec.yaml
 
       - name: Get Release data

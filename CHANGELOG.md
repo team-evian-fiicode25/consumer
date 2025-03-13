@@ -12,3 +12,6 @@ Fix Docker build (again X2)
 
 # v0.1.0-deployment-test5
 Fix Docker build (again X3)
+
+# v0.1.0-deployment-test6
+Fix Flutter build
