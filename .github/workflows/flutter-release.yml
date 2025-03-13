@@ -1,0 +1,106 @@
+name: Flutter
+
+on:
+  repository_dispatch:
+    types: [release]
+
+env:
+  TAG: ${{ github.event.client_payload.tag }}
+  UPLOAD_URL: ${{ github.event.client_payload.upload_url }}
+
+
+jobs:  
+  build:      
+    name: Build & Release 
+    runs-on: macos-latest 
+
+    steps:
+      - name: Cleanup workspace path
+        uses: mickem/clean-after-action@v1
+
+      - name: Set version in pubspec.yaml
+        run: |
+          VERSION="${TAG#v}"  # Remove the "v" prefix
+          sed -i'' -E "s/^(version: ).*$/\1${VERSION}/" pubspec.yaml
+
+      - name: Get Release data
+        id: release_data
+        uses: KevinRohn/github-full-release-data@v2
+        with:
+          version: ${{ env.TAG }}
+
+      - name: Download source code
+        id: get_build_context
+        run: >
+          wget -O source.tar.gz '${{ steps.release_data.outputs.tarball_url }}' && \
+            tar -xvf source.tar.gz && cd "$(tar -tf source.tar.gz | head -n +1)/frontend"
+
+      - name: Set Up Java
+        uses: actions/setup-java@v3.12.0
+        with:
+          distribution: 'oracle'
+          java-version: '17'
+
+      - name: Set Up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.22.2'
+          channel: 'stable'
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Decode Keystore
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/keystore.jks
+          
+      - name: Create key.properties
+        run: |
+          echo "storePassword=${{ secrets.KEYSTORE_PASSWORD }}" > android/key.properties
+          echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> android/key.properties
+          echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> android/key.properties
+          echo "storeFile=keystore.jks" >> android/key.properties
+        
+      - name: Build APK
+        run: flutter build apk --release
+
+      - name: Build appBundle
+        run: flutter build appbundle
+
+      - name: Build IPA
+        run: flutter build ipa --no-codesign
+
+      - name: Compress Archives and IPAs
+        run: |
+          cd build
+          tar -czf ios_build.tar.gz ios
+
+      - name: Upload apk to release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ env.UPLOAD_URL }}
+          asset_path: build/app/outputs/flutter-apk/app-release.apk
+          asset_name: mobile-client-package.apk
+          asset_content_type: application/vnd.android.package-archive
+
+      - name: Upload aab to release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ env.UPLOAD_URL }}
+          asset_path: build/app/outputs/bundle/release/app-release.aab
+          asset_name: mobile-client-play-store.aab
+          asset_content_type: application/x-authorware-bin
+
+      - name: Upload ipa to release
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ env.UPLOAD_URL }}
+          asset_path: build/ios_build.tar.gz
+          asset_name: mobile-client-ios.tar.gz
+          asset_content_type: application/x-compressed-tar

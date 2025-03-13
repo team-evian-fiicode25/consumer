@@ -1,0 +1,35 @@
+name: Release
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*.*.*' ]
+
+env:
+  commit_msg: ${{ github.event.head_commit.message }}
+
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    permissions:
+      packages: write
+      contents: write
+
+    steps:
+      - name: Release project
+        id: create_release
+        uses: CupOfTea696/gh-action-auto-release@v1.0.0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Dispatch event
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          event-type: release
+          client-payload: > 
+            { 
+              "tag": "${{ steps.create_release.outputs.version }}" ,
+              "upload_url": "${{ steps.create_release.outputs.upload_url }}"
+            }
