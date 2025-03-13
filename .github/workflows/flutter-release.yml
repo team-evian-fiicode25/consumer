@@ -8,6 +8,9 @@ env:
   TAG: ${{ github.event.client_payload.tag }}
   UPLOAD_URL: ${{ github.event.client_payload.upload_url }}
 
+permissions:
+  packages: write
+  contents: write
 
 jobs:  
   build:      
