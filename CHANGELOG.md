@@ -18,3 +18,6 @@ Fix Flutter build
 
 # v0.1.0-deployment-test7
 Fix Flutter build (again)
+
+# v0.1.0-deployment-test8
+Fix Flutter build (again X2)
