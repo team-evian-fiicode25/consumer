@@ -30,3 +30,6 @@ Fix Flutter build (again X4)
 
 # v0.1.0-deployment-test11
 Fix Flutter build (again X5)
+
+# v0.1.0-deployment-test12
+Fix Flutter build (again X6)

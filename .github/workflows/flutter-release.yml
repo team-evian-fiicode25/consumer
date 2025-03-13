@@ -29,8 +29,10 @@ jobs:
         run: |
           wget -O source.tar.gz '${{ steps.release_data.outputs.tarball_url }}' && \
             tar -xvf source.tar.gz && cd "$(tar -tf source.tar.gz | head -n 1)/frontend"
+          echo "build_context=$(pwd)" >> $GITHUB_OUTPUT
 
       - name: Set version in pubspec.yaml
+        working-directory: ${{ steps.get_build_context.outputs.build_context }}
         run: |
           VERSION="${TAG#v}"
           sed -i -E "s/^(version: ).*$/version: ${VERSION}/" pubspec.yaml
@@ -48,13 +50,16 @@ jobs:
           channel: 'stable'
 
       - name: Install Dependencies
+        working-directory: ${{ steps.get_build_context.outputs.build_context }}
         run: flutter pub get
 
       - name: Decode Keystore
+        working-directory: ${{ steps.get_build_context.outputs.build_context }}
         run: |
           echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/keystore.jks
           
       - name: Create key.properties
+        working-directory: ${{ steps.get_build_context.outputs.build_context }}
         run: |
           echo "storePassword=${{ secrets.KEYSTORE_PASSWORD }}" > android/key.properties
           echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> android/key.properties
@@ -62,20 +67,25 @@ jobs:
           echo "storeFile=keystore.jks" >> android/key.properties
         
       - name: Build APK
+        working-directory: ${{ steps.get_build_context.outputs.build_context }}
         run: flutter build apk --release
 
       - name: Build appBundle
+        working-directory: ${{ steps.get_build_context.outputs.build_context }}
         run: flutter build appbundle
 
       - name: Build IPA
+        working-directory: ${{ steps.get_build_context.outputs.build_context }}
         run: flutter build ipa --no-codesign
 
       - name: Compress Archives and IPAs
+        working-directory: ${{ steps.get_build_context.outputs.build_context }}
         run: |
           cd build
           tar -czf ios_build.tar.gz ios
 
       - name: Upload apk to release
+        working-directory: ${{ steps.get_build_context.outputs.build_context }}
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -86,6 +96,7 @@ jobs:
           asset_content_type: application/vnd.android.package-archive
 
       - name: Upload aab to release
+        working-directory: ${{ steps.get_build_context.outputs.build_context }}
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -96,6 +107,7 @@ jobs:
           asset_content_type: application/x-authorware-bin
 
       - name: Upload ipa to release
+        working-directory: ${{ steps.get_build_context.outputs.build_context }}
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
