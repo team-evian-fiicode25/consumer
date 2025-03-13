@@ -26,9 +26,9 @@ jobs:
 
       - name: Download source code
         id: get_build_context
-        run: >
+        run: |
           wget -O source.tar.gz '${{ steps.release_data.outputs.tarball_url }}' && \
-            tar -xvf source.tar.gz && cd "$(tar -tf source.tar.gz | head -n +1)/frontend"
+            tar -xvf source.tar.gz && cd "$(tar -tf source.tar.gz | head -n 1)/frontend"
 
       - name: Set version in pubspec.yaml
         run: |
