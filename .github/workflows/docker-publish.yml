@@ -36,8 +36,8 @@ jobs:
       id: get_build_context
       run: |
         wget -O source.tar.gz '${{ steps.release_data.outputs.tarball_url }}' && \
-          tar -xvf source.tar.gz && cd "$(tar -tf source.tar.gz | head -n +1)/API"
-        GITHUB_OUTPUT+="build_context=$(pwd)"
+          tar -xvf source.tar.gz && cd "$(tar -tf source.tar.gz | head -n 1)/API"
+        echo "build_context=$(pwd)" >> $GITHUB_OUTPUT
 
     - name: Install cosign
       uses: sigstore/cosign-installer@59acb6260d9c0ba8f4a2f9d9b48431a222b68e20 #v3.5.0
