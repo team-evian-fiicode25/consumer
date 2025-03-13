@@ -85,34 +85,31 @@ jobs:
           tar -czf ios_build.tar.gz ios
 
       - name: Upload apk to release
-        working-directory: ${{ steps.get_build_context.outputs.build_context }}
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ env.UPLOAD_URL }}
-          asset_path: build/app/outputs/flutter-apk/app-release.apk
+          asset_path: ${{ steps.get_build_context.outputs.build_context }}/build/app/outputs/flutter-apk/app-release.apk
           asset_name: mobile-client-package.apk
           asset_content_type: application/vnd.android.package-archive
 
       - name: Upload aab to release
-        working-directory: ${{ steps.get_build_context.outputs.build_context }}
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ env.UPLOAD_URL }}
-          asset_path: build/app/outputs/bundle/release/app-release.aab
+          asset_path: ${{ steps.get_build_context.outputs.build_context }}/build/app/outputs/bundle/release/app-release.aab
           asset_name: mobile-client-play-store.aab
           asset_content_type: application/x-authorware-bin
 
       - name: Upload ipa to release
-        working-directory: ${{ steps.get_build_context.outputs.build_context }}
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ env.UPLOAD_URL }}
-          asset_path: build/ios_build.tar.gz
+          asset_path: ${{ steps.get_build_context.outputs.build_context }}/build/ios_build.tar.gz
           asset_name: mobile-client-ios.tar.gz
           asset_content_type: application/x-compressed-tar
