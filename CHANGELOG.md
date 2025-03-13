@@ -48,3 +48,7 @@ Fix Flutter build (again X10)
 
 # v0.1.0-deployment-test17
 Fix Flutter build (again X11)
+
+# v0.1.0-deployment-test18
+Try deploying from ubuntu since ios
+deployment doesn't work anyway
