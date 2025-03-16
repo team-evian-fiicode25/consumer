@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/team-evian-fiicode25/consumer/API/internal/services"
 	"github.com/team-evian-fiicode25/consumer/API/internal/models"
+	"github.com/team-evian-fiicode25/consumer/API/internal/services"
 )
 
 type AuthHandler struct {

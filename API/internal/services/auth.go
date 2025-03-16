@@ -14,10 +14,10 @@ type AuthService struct {
 }
 
 func NewAuthService() *AuthService {
-    url, err := config.AuthServiceUrl();
-    if err != nil{
-        log.Fatalln(err.Error())
-    }
+	url, err := config.AuthServiceUrl()
+	if err != nil {
+		log.Fatalln(err.Error())
+	}
 
 	return &AuthService{
 		client: graphql.NewClient(url, http.DefaultClient),
@@ -34,18 +34,18 @@ func (s *AuthService) CreateLogin(ctx context.Context, username, email, phone_nu
 
 func (s *AuthService) LogInWithPassword(ctx context.Context, identifier string, password string) (string, error) {
 	if isValidEmail(identifier) {
-        response, err := LogInWithEmail(ctx, s.client, identifier, password)
-        if err != nil{ 
-            return  "", err
-        }
+		response, err := LogInWithEmail(ctx, s.client, identifier, password)
+		if err != nil {
+			return "", err
+		}
 
-        return response.LoginSession.GetSessionToken().GetToken(), nil;
-	} 
+		return response.LoginSession.GetSessionToken().GetToken(), nil
+	}
 
-    response, err := LogInWithUsername(ctx, s.client, identifier, password)
-    if err != nil{
-        return "", err
-    }
+	response, err := LogInWithUsername(ctx, s.client, identifier, password)
+	if err != nil {
+		return "", err
+	}
 
-    return response.LoginSession.GetSessionToken().GetToken(), nil;
+	return response.LoginSession.GetSessionToken().GetToken(), nil
 }
