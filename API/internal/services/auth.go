@@ -6,6 +6,8 @@ import (
 	"net/http"
 
 	"github.com/Khan/genqlient/graphql"
+	"github.com/team-evian-fiicode25/business-logic/data"
+	"github.com/team-evian-fiicode25/business-logic/user"
 	"github.com/team-evian-fiicode25/consumer/API/internal/config"
 )
 
@@ -24,12 +26,33 @@ func NewAuthService() *AuthService {
 	}
 }
 
-func (s *AuthService) CreateLogin(ctx context.Context, username, email, phone_number, password string) (*CreateLoginResponse, error) {
+func (s *AuthService) CreateLogin(ctx context.Context, username, email, phone_number, password string) (string, error) {
 	resp, err := CreateLogin(ctx, s.client, username, email, phone_number, password)
+
 	if err != nil {
-		return nil, err
+		return "", err
 	}
-	return resp, nil
+
+	var auth data.AuthData
+
+	auth.Username = resp.NewLogin.GetUsername()
+	auth.AuthID = resp.NewLogin.GetId()
+	auth.Email = resp.NewLogin.GetEmail().GetAddress()
+	auth.PhoneNumber = resp.NewLogin.GetPhoneNumber().GetNumber()
+
+	_, err = user.Create(&auth)
+
+	if err != nil {
+		return "", err
+	}
+
+	loginSession, err := LogInWithEmail(ctx, s.client, email, password)
+
+	if err != nil {
+		return "", err
+	}
+
+	return loginSession.LoginSession.GetSessionToken().GetToken(), nil
 }
 
 func (s *AuthService) LogInWithPassword(ctx context.Context, identifier string, password string) (string, error) {

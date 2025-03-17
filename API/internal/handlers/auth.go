@@ -32,7 +32,7 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	newLogin, err := h.consumerService.CreateLogin(context.Background(), request.Username, request.Email, request.Phone_number, request.Password)
+	sessionId, err := h.consumerService.CreateLogin(context.Background(), request.Username, request.Email, request.Phone_number, request.Password)
 	if err != nil {
 		response.Error = err.Error()
 		w.WriteHeader(http.StatusInternalServerError)
@@ -41,8 +41,8 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response = models.AuthResponse{
-		Id:         newLogin.NewLogin.GetId(),
-		Session_id: newLogin.NewLogin.GetId(),
+		Id:         sessionId,
+		Session_id: sessionId,
 	}
 
 	w.WriteHeader(http.StatusCreated)

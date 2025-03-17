@@ -2,6 +2,15 @@ mutation CreateLogin($username: String, $email: String, $phoneNumber: String, $p
   newLogin: createLogin(username: $username, email: $email, phoneNumber: $phoneNumber, password: $password) {
     id
     username
+    email {
+        address
+    }
+    phoneNumber {
+        number
+    }
+    sessionToken {
+        token
+    }
   }
 }
 

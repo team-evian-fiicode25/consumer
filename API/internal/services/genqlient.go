@@ -22,6 +22,10 @@ type CreateLoginNewLoginIQueryableLogin interface {
 	GetId() string
 	// GetUsername returns the interface-field "username" from its implementation.
 	GetUsername() string
+	// GetEmail returns the interface-field "email" from its implementation.
+	GetEmail() CreateLoginNewLoginIQueryableLoginEmailIQueryableEmail
+	// GetPhoneNumber returns the interface-field "phoneNumber" from its implementation.
+	GetPhoneNumber() CreateLoginNewLoginIQueryableLoginPhoneNumberIQueryablePhoneNumber
 }
 
 func (v *CreateLoginNewLoginQueryableLogin) implementsGraphQLInterfaceCreateLoginNewLoginIQueryableLogin() {
@@ -60,10 +64,14 @@ func __marshalCreateLoginNewLoginIQueryableLogin(v *CreateLoginNewLoginIQueryabl
 	case *CreateLoginNewLoginQueryableLogin:
 		typename = "QueryableLogin"
 
+		premarshaled, err := v.__premarshalJSON()
+		if err != nil {
+			return nil, err
+		}
 		result := struct {
 			TypeName string `json:"__typename"`
-			*CreateLoginNewLoginQueryableLogin
-		}{typename, v}
+			*__premarshalCreateLoginNewLoginQueryableLogin
+		}{typename, premarshaled}
 		return json.Marshal(result)
 	case nil:
 		return []byte("null"), nil
@@ -73,11 +81,165 @@ func __marshalCreateLoginNewLoginIQueryableLogin(v *CreateLoginNewLoginIQueryabl
 	}
 }
 
+// CreateLoginNewLoginIQueryableLoginEmailIQueryableEmail includes the requested fields of the GraphQL interface IQueryableEmail.
+//
+// CreateLoginNewLoginIQueryableLoginEmailIQueryableEmail is implemented by the following types:
+// CreateLoginNewLoginIQueryableLoginEmailQueryableEmail
+type CreateLoginNewLoginIQueryableLoginEmailIQueryableEmail interface {
+	implementsGraphQLInterfaceCreateLoginNewLoginIQueryableLoginEmailIQueryableEmail()
+	// GetTypename returns the receiver's concrete GraphQL type-name (see interface doc for possible values).
+	GetTypename() string
+	// GetAddress returns the interface-field "address" from its implementation.
+	GetAddress() string
+}
+
+func (v *CreateLoginNewLoginIQueryableLoginEmailQueryableEmail) implementsGraphQLInterfaceCreateLoginNewLoginIQueryableLoginEmailIQueryableEmail() {
+}
+
+func __unmarshalCreateLoginNewLoginIQueryableLoginEmailIQueryableEmail(b []byte, v *CreateLoginNewLoginIQueryableLoginEmailIQueryableEmail) error {
+	if string(b) == "null" {
+		return nil
+	}
+
+	var tn struct {
+		TypeName string `json:"__typename"`
+	}
+	err := json.Unmarshal(b, &tn)
+	if err != nil {
+		return err
+	}
+
+	switch tn.TypeName {
+	case "QueryableEmail":
+		*v = new(CreateLoginNewLoginIQueryableLoginEmailQueryableEmail)
+		return json.Unmarshal(b, *v)
+	case "":
+		return fmt.Errorf(
+			"response was missing IQueryableEmail.__typename")
+	default:
+		return fmt.Errorf(
+			`unexpected concrete type for CreateLoginNewLoginIQueryableLoginEmailIQueryableEmail: "%v"`, tn.TypeName)
+	}
+}
+
+func __marshalCreateLoginNewLoginIQueryableLoginEmailIQueryableEmail(v *CreateLoginNewLoginIQueryableLoginEmailIQueryableEmail) ([]byte, error) {
+
+	var typename string
+	switch v := (*v).(type) {
+	case *CreateLoginNewLoginIQueryableLoginEmailQueryableEmail:
+		typename = "QueryableEmail"
+
+		result := struct {
+			TypeName string `json:"__typename"`
+			*CreateLoginNewLoginIQueryableLoginEmailQueryableEmail
+		}{typename, v}
+		return json.Marshal(result)
+	case nil:
+		return []byte("null"), nil
+	default:
+		return nil, fmt.Errorf(
+			`unexpected concrete type for CreateLoginNewLoginIQueryableLoginEmailIQueryableEmail: "%T"`, v)
+	}
+}
+
+// CreateLoginNewLoginIQueryableLoginEmailQueryableEmail includes the requested fields of the GraphQL type QueryableEmail.
+type CreateLoginNewLoginIQueryableLoginEmailQueryableEmail struct {
+	Typename string `json:"__typename"`
+	Address  string `json:"address"`
+}
+
+// GetTypename returns CreateLoginNewLoginIQueryableLoginEmailQueryableEmail.Typename, and is useful for accessing the field via an interface.
+func (v *CreateLoginNewLoginIQueryableLoginEmailQueryableEmail) GetTypename() string {
+	return v.Typename
+}
+
+// GetAddress returns CreateLoginNewLoginIQueryableLoginEmailQueryableEmail.Address, and is useful for accessing the field via an interface.
+func (v *CreateLoginNewLoginIQueryableLoginEmailQueryableEmail) GetAddress() string { return v.Address }
+
+// CreateLoginNewLoginIQueryableLoginPhoneNumberIQueryablePhoneNumber includes the requested fields of the GraphQL interface IQueryablePhoneNumber.
+//
+// CreateLoginNewLoginIQueryableLoginPhoneNumberIQueryablePhoneNumber is implemented by the following types:
+// CreateLoginNewLoginIQueryableLoginPhoneNumberQueryablePhoneNumber
+type CreateLoginNewLoginIQueryableLoginPhoneNumberIQueryablePhoneNumber interface {
+	implementsGraphQLInterfaceCreateLoginNewLoginIQueryableLoginPhoneNumberIQueryablePhoneNumber()
+	// GetTypename returns the receiver's concrete GraphQL type-name (see interface doc for possible values).
+	GetTypename() string
+	// GetNumber returns the interface-field "number" from its implementation.
+	GetNumber() string
+}
+
+func (v *CreateLoginNewLoginIQueryableLoginPhoneNumberQueryablePhoneNumber) implementsGraphQLInterfaceCreateLoginNewLoginIQueryableLoginPhoneNumberIQueryablePhoneNumber() {
+}
+
+func __unmarshalCreateLoginNewLoginIQueryableLoginPhoneNumberIQueryablePhoneNumber(b []byte, v *CreateLoginNewLoginIQueryableLoginPhoneNumberIQueryablePhoneNumber) error {
+	if string(b) == "null" {
+		return nil
+	}
+
+	var tn struct {
+		TypeName string `json:"__typename"`
+	}
+	err := json.Unmarshal(b, &tn)
+	if err != nil {
+		return err
+	}
+
+	switch tn.TypeName {
+	case "QueryablePhoneNumber":
+		*v = new(CreateLoginNewLoginIQueryableLoginPhoneNumberQueryablePhoneNumber)
+		return json.Unmarshal(b, *v)
+	case "":
+		return fmt.Errorf(
+			"response was missing IQueryablePhoneNumber.__typename")
+	default:
+		return fmt.Errorf(
+			`unexpected concrete type for CreateLoginNewLoginIQueryableLoginPhoneNumberIQueryablePhoneNumber: "%v"`, tn.TypeName)
+	}
+}
+
+func __marshalCreateLoginNewLoginIQueryableLoginPhoneNumberIQueryablePhoneNumber(v *CreateLoginNewLoginIQueryableLoginPhoneNumberIQueryablePhoneNumber) ([]byte, error) {
+
+	var typename string
+	switch v := (*v).(type) {
+	case *CreateLoginNewLoginIQueryableLoginPhoneNumberQueryablePhoneNumber:
+		typename = "QueryablePhoneNumber"
+
+		result := struct {
+			TypeName string `json:"__typename"`
+			*CreateLoginNewLoginIQueryableLoginPhoneNumberQueryablePhoneNumber
+		}{typename, v}
+		return json.Marshal(result)
+	case nil:
+		return []byte("null"), nil
+	default:
+		return nil, fmt.Errorf(
+			`unexpected concrete type for CreateLoginNewLoginIQueryableLoginPhoneNumberIQueryablePhoneNumber: "%T"`, v)
+	}
+}
+
+// CreateLoginNewLoginIQueryableLoginPhoneNumberQueryablePhoneNumber includes the requested fields of the GraphQL type QueryablePhoneNumber.
+type CreateLoginNewLoginIQueryableLoginPhoneNumberQueryablePhoneNumber struct {
+	Typename string `json:"__typename"`
+	Number   string `json:"number"`
+}
+
+// GetTypename returns CreateLoginNewLoginIQueryableLoginPhoneNumberQueryablePhoneNumber.Typename, and is useful for accessing the field via an interface.
+func (v *CreateLoginNewLoginIQueryableLoginPhoneNumberQueryablePhoneNumber) GetTypename() string {
+	return v.Typename
+}
+
+// GetNumber returns CreateLoginNewLoginIQueryableLoginPhoneNumberQueryablePhoneNumber.Number, and is useful for accessing the field via an interface.
+func (v *CreateLoginNewLoginIQueryableLoginPhoneNumberQueryablePhoneNumber) GetNumber() string {
+	return v.Number
+}
+
 // CreateLoginNewLoginQueryableLogin includes the requested fields of the GraphQL type QueryableLogin.
 type CreateLoginNewLoginQueryableLogin struct {
-	Typename string `json:"__typename"`
-	Id       string `json:"id"`
-	Username string `json:"username"`
+	Typename    string                                                             `json:"__typename"`
+	Id          string                                                             `json:"id"`
+	Username    string                                                             `json:"username"`
+	Email       CreateLoginNewLoginIQueryableLoginEmailIQueryableEmail             `json:"-"`
+	PhoneNumber CreateLoginNewLoginIQueryableLoginPhoneNumberIQueryablePhoneNumber `json:"-"`
 }
 
 // GetTypename returns CreateLoginNewLoginQueryableLogin.Typename, and is useful for accessing the field via an interface.
@@ -88,6 +250,116 @@ func (v *CreateLoginNewLoginQueryableLogin) GetId() string { return v.Id }
 
 // GetUsername returns CreateLoginNewLoginQueryableLogin.Username, and is useful for accessing the field via an interface.
 func (v *CreateLoginNewLoginQueryableLogin) GetUsername() string { return v.Username }
+
+// GetEmail returns CreateLoginNewLoginQueryableLogin.Email, and is useful for accessing the field via an interface.
+func (v *CreateLoginNewLoginQueryableLogin) GetEmail() CreateLoginNewLoginIQueryableLoginEmailIQueryableEmail {
+	return v.Email
+}
+
+// GetPhoneNumber returns CreateLoginNewLoginQueryableLogin.PhoneNumber, and is useful for accessing the field via an interface.
+func (v *CreateLoginNewLoginQueryableLogin) GetPhoneNumber() CreateLoginNewLoginIQueryableLoginPhoneNumberIQueryablePhoneNumber {
+	return v.PhoneNumber
+}
+
+func (v *CreateLoginNewLoginQueryableLogin) UnmarshalJSON(b []byte) error {
+
+	if string(b) == "null" {
+		return nil
+	}
+
+	var firstPass struct {
+		*CreateLoginNewLoginQueryableLogin
+		Email       json.RawMessage `json:"email"`
+		PhoneNumber json.RawMessage `json:"phoneNumber"`
+		graphql.NoUnmarshalJSON
+	}
+	firstPass.CreateLoginNewLoginQueryableLogin = v
+
+	err := json.Unmarshal(b, &firstPass)
+	if err != nil {
+		return err
+	}
+
+	{
+		dst := &v.Email
+		src := firstPass.Email
+		if len(src) != 0 && string(src) != "null" {
+			err = __unmarshalCreateLoginNewLoginIQueryableLoginEmailIQueryableEmail(
+				src, dst)
+			if err != nil {
+				return fmt.Errorf(
+					"unable to unmarshal CreateLoginNewLoginQueryableLogin.Email: %w", err)
+			}
+		}
+	}
+
+	{
+		dst := &v.PhoneNumber
+		src := firstPass.PhoneNumber
+		if len(src) != 0 && string(src) != "null" {
+			err = __unmarshalCreateLoginNewLoginIQueryableLoginPhoneNumberIQueryablePhoneNumber(
+				src, dst)
+			if err != nil {
+				return fmt.Errorf(
+					"unable to unmarshal CreateLoginNewLoginQueryableLogin.PhoneNumber: %w", err)
+			}
+		}
+	}
+	return nil
+}
+
+type __premarshalCreateLoginNewLoginQueryableLogin struct {
+	Typename string `json:"__typename"`
+
+	Id string `json:"id"`
+
+	Username string `json:"username"`
+
+	Email json.RawMessage `json:"email"`
+
+	PhoneNumber json.RawMessage `json:"phoneNumber"`
+}
+
+func (v *CreateLoginNewLoginQueryableLogin) MarshalJSON() ([]byte, error) {
+	premarshaled, err := v.__premarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(premarshaled)
+}
+
+func (v *CreateLoginNewLoginQueryableLogin) __premarshalJSON() (*__premarshalCreateLoginNewLoginQueryableLogin, error) {
+	var retval __premarshalCreateLoginNewLoginQueryableLogin
+
+	retval.Typename = v.Typename
+	retval.Id = v.Id
+	retval.Username = v.Username
+	{
+
+		dst := &retval.Email
+		src := v.Email
+		var err error
+		*dst, err = __marshalCreateLoginNewLoginIQueryableLoginEmailIQueryableEmail(
+			&src)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"unable to marshal CreateLoginNewLoginQueryableLogin.Email: %w", err)
+		}
+	}
+	{
+
+		dst := &retval.PhoneNumber
+		src := v.PhoneNumber
+		var err error
+		*dst, err = __marshalCreateLoginNewLoginIQueryableLoginPhoneNumberIQueryablePhoneNumber(
+			&src)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"unable to marshal CreateLoginNewLoginQueryableLogin.PhoneNumber: %w", err)
+		}
+	}
+	return &retval, nil
+}
 
 // CreateLoginResponse is returned by CreateLogin on success.
 type CreateLoginResponse struct {
@@ -801,6 +1073,14 @@ mutation CreateLogin ($username: String, $email: String, $phoneNumber: String, $
 		__typename
 		id
 		username
+		email {
+			__typename
+			address
+		}
+		phoneNumber {
+			__typename
+			number
+		}
 	}
 }
 `
