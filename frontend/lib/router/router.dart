@@ -1,10 +1,10 @@
-import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../bloc/auth/auth_bloc.dart';
 import '../bloc/auth/auth_state.dart';
 import '../screens/auth/forgot_password_page.dart';
+import '../core/callbacks/auth_callback_page.dart';
 import '../screens/auth/landing_page.dart';
 import '../screens/auth/login_page.dart';
 import '../screens/auth/register_page.dart';
@@ -12,6 +12,7 @@ import '../screens/home/home.dart';
 
 final GoRouter router = GoRouter(
   redirect: (context, state) {
+    final uri = state.uri;
     final authState = context.read<AuthBloc>().state;
     final String currentPath = state.uri.toString();
 
@@ -26,9 +27,22 @@ final GoRouter router = GoRouter(
       return '/home';
     }
 
+    if (uri.scheme == 'ride' && uri.host == 'uber') {
+      final query = uri.query;
+      return query.isNotEmpty ? "/auth?$query" : "/auth";
+    }
+
     return null; // No redirect, proceed normally
   },
   routes: [
+    GoRoute(
+      path: '/auth',
+      name: 'auth-callback',
+      builder: (context, state) {
+        // Pass query parameters to the AuthCallbackPage
+        return AuthCallbackPage(queryParameters: state.uri.queryParameters);
+      },
+    ),
     GoRoute(
       path: '/',
       name: 'landing-page',
