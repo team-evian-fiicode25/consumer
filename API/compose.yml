@@ -9,6 +9,7 @@ services:
       POSTGRES_PASSWORD: root
       POSTGRES_DATABASE: rideme
       POSTGRES_TIMEZONE: Europe/Bucharest
+    restart: on-failure
     ports:
       - '8000:8000'
     depends_on:
