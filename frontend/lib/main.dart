@@ -5,7 +5,6 @@ import 'bloc/auth/auth_bloc.dart';
 import 'bloc/auth/auth_state.dart';
 import 'router/router.dart';
 import 'core/theme/app_theme.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 void main() {
     runApp(const MyApp());
