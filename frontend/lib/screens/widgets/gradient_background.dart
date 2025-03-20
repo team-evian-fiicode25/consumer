@@ -6,9 +6,9 @@ class GradientBackground extends StatelessWidget {
   final double height;
 
   const GradientBackground({
-    Key? key,
+    super.key,
     this.height = 280,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

@@ -29,6 +29,21 @@ class AppTheme {
         fontWeight: FontWeight.bold,
         color: Colors.black,
       ),
+      titleSmall: GoogleFonts.poppins(
+        fontSize: 14,
+        fontWeight: FontWeight.w500,
+        color: Colors.black,
+      ),
+      titleMedium: GoogleFonts.poppins(
+        fontSize: 16,
+        fontWeight: FontWeight.w500,
+        color: Colors.black,
+      ),
+      titleLarge: GoogleFonts.poppins(
+        fontSize: 20,
+        fontWeight: FontWeight.w500,
+        color: Colors.black,
+      ),
       bodyLarge: GoogleFonts.poppins(
         fontSize: 16,
         fontWeight: FontWeight.normal,
@@ -38,6 +53,26 @@ class AppTheme {
         fontSize: 14,
         fontWeight: FontWeight.normal,
         color: Colors.grey[800],
+      ),
+      bodySmall: GoogleFonts.poppins(
+        fontSize: 12,
+        fontWeight: FontWeight.normal,
+        color: Colors.grey[800],
+      ),
+      labelLarge: GoogleFonts.poppins(
+        fontSize: 14,
+        fontWeight: FontWeight.w500,
+        color: Colors.grey[900],
+      ),
+      labelMedium: GoogleFonts.poppins(
+        fontSize: 12,
+        fontWeight: FontWeight.w500,
+        color: Colors.grey[900],
+      ),
+      labelSmall: GoogleFonts.poppins(
+        fontSize: 10,
+        fontWeight: FontWeight.w500,
+        color: Colors.grey[900],
       ),
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
@@ -72,7 +107,30 @@ class AppTheme {
         borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: Color(0xffff6600), width: 2),
       ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey[300]!, width: 1),
+      ),
+      labelStyle: TextStyle(color: Colors.grey[700]),
+      prefixIconColor: Colors.grey[600],
     ),
+    cardTheme: CardTheme(
+      color: Colors.white,
+      elevation: 4,
+      shadowColor: Colors.black.withOpacity(0.2),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+    ),
+    extensions: [
+      CustomStyles(
+        scrollTooltipStyle: TextStyle(
+          color: Colors.grey[600],
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+    ],
   );
 
   static ThemeData darkTheme = ThemeData(
@@ -102,16 +160,50 @@ class AppTheme {
         fontWeight: FontWeight.bold,
         color: Colors.white,
       ),
+      titleSmall: GoogleFonts.poppins(
+        fontSize: 14,
+        fontWeight: FontWeight.w500,
+        color: Colors.white,
+      ),
+      titleMedium: GoogleFonts.poppins(
+        fontSize: 16,
+        fontWeight: FontWeight.w500,
+        color: Colors.white,
+      ),
+      titleLarge: GoogleFonts.poppins(
+        fontSize: 20,
+        fontWeight: FontWeight.w500,
+        color: Colors.white,
+      ),
       bodyLarge: GoogleFonts.poppins(
         fontSize: 16,
         fontWeight: FontWeight.normal,
         color: Colors.white70,
       ),
-
       bodyMedium: GoogleFonts.poppins(
         fontSize: 14,
         fontWeight: FontWeight.normal,
         color: Colors.white70,
+      ),
+      bodySmall: GoogleFonts.poppins(
+        fontSize: 12,
+        fontWeight: FontWeight.normal,
+        color: Colors.white70,
+      ),
+      labelLarge: GoogleFonts.poppins(
+        fontSize: 14,
+        fontWeight: FontWeight.w500,
+        color: Colors.white,
+      ),
+      labelMedium: GoogleFonts.poppins(
+        fontSize: 12,
+        fontWeight: FontWeight.w500,
+        color: Colors.white,
+      ),
+      labelSmall: GoogleFonts.poppins(
+        fontSize: 10,
+        fontWeight: FontWeight.w500,
+        color: Colors.white,
       ),
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
@@ -146,6 +238,57 @@ class AppTheme {
         borderRadius: BorderRadius.circular(12),
         borderSide: const BorderSide(color: Color(0xffff6600), width: 2),
       ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: Color(0xFF3F3F3F), width: 1),
+      ),
+      labelStyle: const TextStyle(color: Colors.white70),
+      prefixIconColor: Colors.white70,
+      hintStyle: const TextStyle(color: Colors.white54),
     ),
+    cardTheme: CardTheme(
+      color: const Color(0xFF1E1E1E),
+      elevation: 8,
+      shadowColor: Colors.black.withOpacity(0.3),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+      ),
+    ),
+    extensions: [
+      CustomStyles(
+        scrollTooltipStyle: TextStyle(
+          color: Colors.grey[400],
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+    ],
   );
+}
+
+class CustomStyles extends ThemeExtension<CustomStyles> {
+  final TextStyle? scrollTooltipStyle;
+
+  const CustomStyles({
+    required this.scrollTooltipStyle,
+  });
+
+  @override
+  ThemeExtension<CustomStyles> copyWith({
+    TextStyle? scrollTooltipStyle,
+  }) {
+    return CustomStyles(
+      scrollTooltipStyle: scrollTooltipStyle ?? this.scrollTooltipStyle,
+    );
+  }
+
+  @override
+  ThemeExtension<CustomStyles> lerp(ThemeExtension<CustomStyles>? other, double t) {
+    if (other is! CustomStyles) {
+      return this;
+    }
+    return CustomStyles(
+      scrollTooltipStyle: TextStyle.lerp(scrollTooltipStyle, other.scrollTooltipStyle, t),
+    );
+  }
 }

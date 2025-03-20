@@ -7,6 +7,7 @@ import '../../bloc/auth/auth_state.dart';
 import '../widgets/custom_text_field.dart';
 import '../widgets/custom_button.dart';
 import '../widgets/gradient_background.dart';
+import '../widgets/back_button.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -38,13 +39,20 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    final screenSize = MediaQuery.of(context).size;
+    final isLandscape = screenSize.width > screenSize.height;
+    final isSmallScreen = screenSize.width < 600;
+    final contentPadding = isSmallScreen ? 16.0 : 24.0;
+    final backgroundHeight = isLandscape ? screenSize.height : (isSmallScreen ? 220.0 : 280.0);
+
     return Scaffold(
       body: Stack(
+        fit: StackFit.expand,
         children: [
-          GradientBackground(),
+          GradientBackground(height: backgroundHeight),
           SafeArea(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24.0),
+              padding: EdgeInsets.all(contentPadding),
               child: Form(
                 key: _formKey,
                 child: BlocConsumer<AuthBloc, AuthState>(
@@ -58,16 +66,80 @@ class _LoginPageState extends State<LoginPage> {
                     }
                   },
                   builder: (context, state) {
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        const SizedBox(height: 100),
-                        _buildHeader(context),
-                        const SizedBox(height: 180),
-                        _buildLoginForm(context, state),
-                        const SizedBox(height: 24),
-                        _buildRegisterLink(context),
-                      ],
+                    return Center(
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          maxWidth: isLandscape ? 900 : 450,
+                        ),
+                        child: isLandscape
+                            ? Stack(
+                              children: [
+                                Row(
+                                    crossAxisAlignment: CrossAxisAlignment.center,
+                                    children: [
+                                      Expanded(
+                                        child: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            _buildHeader(context),
+                                          ],
+                                        ),
+                                      ),
+                                      const SizedBox(width: 24),
+                                      Expanded(
+                                        child: Card(
+                                          elevation: 8,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(16),
+                                          ),
+                                          child: Padding(
+                                            padding: EdgeInsets.all(contentPadding),
+                                            child: Column(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                _buildLoginForm(context, state),
+                                                const SizedBox(height: 24),
+                                                _buildRegisterLink(context),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      CustomBackButton(path: 'landing-page'),
+                                    ],
+                                  ),
+                                ],
+                              )
+                            : Stack(
+                                children: [
+                                  Column(
+                                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                                    children: [
+                                      const SizedBox(height: 100),
+                                      _buildHeader(context),
+                                      const SizedBox(height: 180),
+                                      Card(
+                                        elevation: 8,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(16),
+                                        ),
+                                        child: Padding(
+                                          padding: EdgeInsets.all(contentPadding),
+                                          child: Column(
+                                            children: [
+                                              _buildLoginForm(context, state),
+                                              const SizedBox(height: 24),
+                                              _buildRegisterLink(context),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  CustomBackButton(path: 'landing-page'),
+                                ],
+                              ),
+                      ),
                     );
                   },
                 ),
