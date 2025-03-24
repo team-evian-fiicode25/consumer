@@ -38,7 +38,7 @@ func (s *AuthService) CreateLogin(ctx context.Context, username, email, phone_nu
 	auth.Username = resp.NewLogin.GetUsername()
 	auth.AuthID = resp.NewLogin.GetId()
 	auth.Email = resp.NewLogin.GetEmail().GetAddress()
-	
+
 	if phoneNumber := resp.NewLogin.GetPhoneNumber(); phoneNumber != nil {
 		auth.PhoneNumber = phoneNumber.GetNumber()
 	}
