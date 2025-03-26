@@ -80,3 +80,8 @@ API/*.bak
 # Docker-related files (optional)
 API/.dockerignore
 API/docker-compose.override.yml
+
+# Generated files
+pubspec.lock
+frontend/pubspec.lock
+.idea/*
