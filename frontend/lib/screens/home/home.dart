@@ -49,6 +49,7 @@ class _HomePageState extends State<HomePage> {
             initialCameraPosition: CameraPosition(target: currentLocation, zoom: 14.4746),
             onMapCreated: (controller) {
               // TODO (mihaescuvlad): Ivestigate controller caching
+              // Optionally store the controller if needed later.
             },
             myLocationEnabled: true,
           ),
@@ -162,9 +163,9 @@ class _HomePageState extends State<HomePage> {
           onPressed: () {
             context.goNamed('settings');
           },
-        ),
       ),
-    );
+    )
+   );
   }
 
   Widget _buildSavedPlace(ThemeData theme, String name, IconData icon, {required VoidCallback onTap}) {
@@ -201,5 +202,4 @@ class _HomePageState extends State<HomePage> {
       longitude: currentLocation.longitude,
     );
   }
-
 }
