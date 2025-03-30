@@ -1,0 +1,36 @@
+Privacy Policy
+
+Last Updated: ${DateTime.now().toString().substring(0, 10)}
+
+1. Information We Collect
+We collect information you provide directly to us, such as when you create an account, update your profile, or communicate with us.
+
+2. How We Use Information
+We use the information we collect to provide, maintain, and improve our services, communicate with you, and protect our services and users.
+
+3. Information Sharing
+We may share information as follows:
+- With third-party service providers who perform services on our behalf
+- To comply with legal obligations
+- In connection with a merger, sale, or acquisition
+
+4. Data Security
+We take reasonable measures to help protect your personal information from loss, theft, misuse, and unauthorized access.
+
+5. Your Choices
+You can access, update, or delete your account information at any time by logging into your account.
+
+6. Children's Privacy
+Our services are not directed to children under 13, and we do not knowingly collect personal information from children under 13.
+
+7. Changes to This Policy
+We may update this Privacy Policy from time to time. We will notify you of any changes by posting the new policy on this page.
+
+8. Contact Us
+If you have questions about this Privacy Policy, please contact us at privacy@example.com.
+
+9. Cookies and Tracking Technologies
+We use cookies and similar tracking technologies to track activity on our service and hold certain information.
+
+10. International Data Transfers
+Your information may be transferred to — and maintained on — computers located outside of your state, province, or country.

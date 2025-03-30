@@ -1,0 +1,33 @@
+Terms of Service
+
+Last Updated: ${DateTime.now().toString().substring(0, 10)}
+
+1. Acceptance of Terms
+By accessing and using this application, you acknowledge that you have read, understood, and agree to be bound by these Terms of Service.
+
+2. User Account
+You are responsible for maintaining the confidentiality of your account credentials and for all activities that occur under your account.
+
+3. User Conduct
+You agree not to use the service for any unlawful purpose or in any way that could damage, disable, overburden, or impair the service.
+
+4. Intellectual Property
+All content included in the application, such as text, graphics, logos, and software, is the property of the company or its content suppliers and is protected by copyright laws.
+
+5. Privacy
+Your privacy is important to us. Please review our Privacy Policy to understand how we collect, use, and disclose information.
+
+6. Limitation of Liability
+To the maximum extent permitted by law, the company shall not be liable for any indirect, incidental, special, consequential, or punitive damages.
+
+7. Termination
+We reserve the right to terminate or suspend your access to the service at any time, without notice, for conduct that we believe violates these Terms or is harmful to other users, us, or third parties.
+
+8. Changes to Terms
+We may modify these Terms at any time. It is your responsibility to check these Terms periodically for changes.
+
+9. Governing Law
+These Terms shall be governed by the laws of Romania, without regard to its conflict of law provisions.
+
+10. Contact Information
+For questions about these Terms, please contact us at support@example.com.
