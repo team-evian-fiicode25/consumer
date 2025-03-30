@@ -36,7 +36,7 @@ class DestinationSearchBar extends StatelessWidget {
         ),
       ),
       child: InkWell(
-        onTap: isNavigating ? null : onSearchPressed,
+        onTap: onSearchPressed,
         borderRadius: BorderRadius.circular(20),
         child: Opacity(
           opacity: isNavigating ? 0.8 : 1.0,
@@ -49,7 +49,7 @@ class DestinationSearchBar extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                isNavigating ? "Navigation active" : "Where to?",
+                "Where to?",
                 style: theme.textTheme.bodyMedium?.copyWith(
                   color: Colors.grey[600],
                   fontWeight: FontWeight.w500,

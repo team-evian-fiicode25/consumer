@@ -87,6 +87,7 @@ class StateManager {
   Function(LatLng)? _followUserCallback;
   Function(LatLng, {double zoom})? _animateCameraToCallback;
   StreamSubscription<LatLng?>? _locationSubscription;
+  DateTime? _navigationStartTime;
 
   final Map<String, Color> transportColors = {
     "driving": Colors.blue.shade700,
@@ -521,6 +522,8 @@ class StateManager {
       return;
     }
     
+    _navigationStartTime = DateTime.now();
+    
     updateState((state) => state.copyWith(
       isFollowing: true,
       isNavigating: true,
@@ -645,6 +648,28 @@ class StateManager {
           return;
         }
         
+        if (_state.isNavigating) {
+          final String distanceStr = result['distance'] ?? '';
+          final double distanceInMeters = LocationHelper.parseDistanceStringToMeters(distanceStr);
+          
+          final double directDistanceInMeters = LocationHelper.calculateDistanceInMeters(
+            _state.currentLocation, 
+            _state.destination!
+          );
+          
+          if (distanceInMeters > 0 &&
+              distanceInMeters < 70 && 
+              directDistanceInMeters < 100 &&
+              distanceStr.isNotEmpty) {
+            
+            if (_navigationStartTime != null &&
+                DateTime.now().difference(_navigationStartTime!).inSeconds > 5) {
+              _showDestinationReachedNotification();
+              return;
+            }
+          }
+        }
+        
         updateState((state) => state.copyWith(
           distance: () => result['distance'],
           duration: () => result['duration'],
@@ -694,6 +719,8 @@ class StateManager {
     _distanceTimer?.cancel();
     _distanceTimer = null;
     
+    _navigationStartTime = null;
+    
     updateState((state) => state.copyWith(
       transitDetails: <dynamic>[],
       transitStops: <Circle>{},
@@ -712,6 +739,8 @@ class StateManager {
     _distanceTimer?.cancel();
     _distanceTimer = null;
     
+    _navigationStartTime = null;
+    
     updateState((state) => state.copyWith(
       destination: () => null,
       isNavigating: false,
@@ -724,6 +753,10 @@ class StateManager {
       duration: () => null,
       currentTransitStep: 0,
     ));
+    
+    if (_animateCameraToCallback != null) {
+      _animateCameraToCallback!(_state.currentLocation, zoom: 16);
+    }
   }
 
   void _fallbackToTwoWheeler() {
@@ -767,5 +800,45 @@ class StateManager {
     ));
     
     updateDistanceAndTime();
+  }
+
+  void _showDestinationReachedNotification() {
+    ScaffoldMessenger.of(context).clearSnackBars();
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.location_on, color: Colors.white),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: const [
+                  Text(
+                    'You have arrived!',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    'Your destination has been reached',
+                    style: TextStyle(fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: Colors.green.shade700,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(8),
+        ),
+        margin: const EdgeInsets.all(8),
+        duration: const Duration(seconds: 5),
+      ),
+    );
+    
+    clearDestination();
   }
 }
