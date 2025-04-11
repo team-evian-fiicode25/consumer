@@ -26,11 +26,12 @@ services:
       POSTGRES_DB: rideme
 
   auth-service:
-    image: ghcr.io/team-evian-fiicode25/authentication:v0.6.0
+    image: ghcr.io/team-evian-fiicode25/authentication:v0.7.1
     environment:
-      MANDATORYFIELDS__USERNAME: '1'
-      MANDATORYFIELDS__PHONENUMBER: '0'
-      MANDATORYFIELDS__EMAIL: '1'
+      MANDATORYFIELDS__USERNAME: true
+      MANDATORYFIELDS__PHONENUMBER: false
+      MANDATORYFIELDS__EMAIL: true
+      PASSWORD__INSECURE: '1'
       DATABASETYPE: mongo
       MONGO__HOSTNAME: mongo
       MONGO__PORT: 27017

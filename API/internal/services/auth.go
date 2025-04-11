@@ -75,3 +75,13 @@ func (s *AuthService) LogInWithPassword(ctx context.Context, identifier string, 
 
 	return response.LoginSession.GetSessionToken().GetToken(), nil
 }
+
+func (s *AuthService) VerifyToken(ctx context.Context, token string) bool {
+    resp, err := VerifyToken(ctx, s.client, token);
+
+    if err != nil || resp.GetLogin() == nil {
+        return false
+    }
+
+    return true
+}

@@ -8,9 +8,6 @@ mutation CreateLogin($username: String, $email: String, $phoneNumber: String, $p
     phoneNumber {
         number
     }
-    sessionToken {
-        token
-    }
   }
 }
 
@@ -28,4 +25,10 @@ mutation LogInWithEmail($email: String!, $password: String!) {
         token
     }
   }
+}
+
+query VerifyToken($sessionToken: String!) {
+    login(sessionToken: $sessionToken) {
+        id
+    }
 }
