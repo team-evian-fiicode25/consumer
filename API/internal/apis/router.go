@@ -10,9 +10,9 @@ import (
 func SetupRoutes() {
 	mux := http.NewServeMux()
 
-	consumerService := services.NewAuthService()
+	authService := services.NewAuthService()
 
-	registerAuthRoutes(mux, handlers.NewAuthHandler(consumerService))
+	registerAuthRoutes(mux, handlers.NewAuthHandler(authService))
 
 	http.ListenAndServe(":8000", mux)
 }

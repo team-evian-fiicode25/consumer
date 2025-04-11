@@ -10,12 +10,12 @@ import (
 )
 
 type AuthHandler struct {
-	consumerService *services.AuthService
+	authService *services.AuthService
 }
 
 func NewAuthHandler(client *services.AuthService) *AuthHandler {
 	return &AuthHandler{
-		consumerService: client,
+		authService: client,
 	}
 }
 
@@ -32,7 +32,7 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sessionId, err := h.consumerService.CreateLogin(context.Background(), request.Username, request.Email, request.Phone_number, request.Password)
+	sessionId, err := h.authService.CreateLogin(context.Background(), request.Username, request.Email, request.Phone_number, request.Password)
 	if err != nil {
 		response.Error = err.Error()
 		w.WriteHeader(http.StatusInternalServerError)
@@ -63,7 +63,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sessionToken, err := h.consumerService.LogInWithPassword(context.Background(), request.Identifier, request.Password)
+	sessionToken, err := h.authService.LogInWithPassword(context.Background(), request.Identifier, request.Password)
 	if err != nil {
 		response.Error = err.Error()
 
