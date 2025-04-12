@@ -3,27 +3,21 @@ services:
     build: .
     environment:
       AUTH_URL: "http://auth-service:8080/graphql"
-      POSTGRES_HOST: postgres
-      POSTGRES_PORT: 5432
-      POSTGRES_USER: root
-      POSTGRES_PASSWORD: root
-      POSTGRES_DATABASE: rideme
-      POSTGRES_TIMEZONE: Europe/Bucharest
     restart: on-failure
     ports:
       - '8000:8000'
     depends_on:
-      - postgres
       - auth-service
 
-  postgres:
-    image: 'postgres:latest'
-    ports:
-      - '5432:5432'
-    environment:
-      POSTGRES_USER: root
-      POSTGRES_PASSWORD: root
-      POSTGRES_DB: rideme
+  # postgres:
+  #   image: 'postgres:latest'
+  #   restart: always
+  #   ports:
+  #     - '5432:5432'
+  #   environment:
+  #     POSTGRES_USER: root
+  #     POSTGRES_PASSWORD: root
+  #     POSTGRES_DB: rideme
 
   auth-service:
     image: ghcr.io/team-evian-fiicode25/authentication:v0.7.1
@@ -42,8 +36,7 @@ services:
 
   mongo:
     image: mongo
-    ports:
-      - '27017:27017'
+    restart: always
     environment:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: root
