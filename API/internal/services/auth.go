@@ -77,11 +77,11 @@ func (s *AuthService) LogInWithPassword(ctx context.Context, identifier string, 
 }
 
 func (s *AuthService) VerifyToken(ctx context.Context, token string) bool {
-    resp, err := VerifyToken(ctx, s.client, token);
+	resp, err := VerifyToken(ctx, s.client, token)
 
-    if err != nil || resp.GetLogin() == nil {
-        return false
-    }
+	if err != nil || resp.GetLogin() == nil {
+		return false
+	}
 
-    return true
+	return true
 }

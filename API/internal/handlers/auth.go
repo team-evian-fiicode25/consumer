@@ -82,15 +82,15 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AuthHandler) AuthMiddleware(next http.Handler) http.Handler {
-    return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-        header := r.Header.Get("Authorization")
-        match := regexp.MustCompile(`^Bearer\s+(\S+)$`).FindStringSubmatch(header)
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		header := r.Header.Get("Authorization")
+		match := regexp.MustCompile(`^Bearer\s+(\S+)$`).FindStringSubmatch(header)
 
-        if match == nil || !h.authService.VerifyToken(r.Context(), match[1]) {
-            http.Error(w, "Unauthorized", http.StatusUnauthorized)
-            return
-        }
+		if match == nil || !h.authService.VerifyToken(r.Context(), match[1]) {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
 
-        next.ServeHTTP(w, r)
-    })
+		next.ServeHTTP(w, r)
+	})
 }
