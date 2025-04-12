@@ -93,7 +93,7 @@ class StateManager {
 
   DateTime? _navigationStartTime;
   bool _isOnTransit = false;
-  String _previousTransportMode = "driving";
+  String _previousTransportMode = "walking";
 
   final Map<String, Map<String, String>> _modeEstimates = {
     "driving": {"distance": "", "duration": ""},

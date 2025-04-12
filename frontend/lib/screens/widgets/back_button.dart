@@ -13,22 +13,18 @@ class CustomBackButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Positioned(
-      left: 0,
-      top: 0,
-      child: IconButton(
-        icon: Icon(
-          Icons.arrow_back,
-          color: color ?? Theme.of(context).colorScheme.onPrimary,
-        ),
-        onPressed: () {
-          if (path != null) {
-            context.goNamed(path!);
-          } else {
-            context.pop();
-          }
-        },
+    return IconButton(
+      icon: Icon(
+        Icons.arrow_back,
+        color: color ?? Theme.of(context).colorScheme.onPrimary,
       ),
+      onPressed: () {
+        if (path != null) {
+          context.goNamed(path!);
+        } else {
+          context.pop();
+        }
+      },
     );
   }
 }

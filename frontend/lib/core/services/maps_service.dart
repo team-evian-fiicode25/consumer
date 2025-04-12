@@ -143,7 +143,7 @@ class MapsService {
     final url = 'https://maps.googleapis.com/maps/api/directions/json?'
         'origin=${origin.latitude},${origin.longitude}&'
         'destination=${destination.latitude},${destination.longitude}&'
-        'mode=$mode&key=$apiKey&departure_time=1744449793';
+        'mode=$mode&key=$apiKey';
 
     final response = await _safeHttpGet(url, errorContext: 'getDistanceMatrix');
     if (response == null) return null;
@@ -558,7 +558,7 @@ class MapsService {
     final url = 'https://maps.googleapis.com/maps/api/directions/json?'
         'origin=${origin.latitude},${origin.longitude}&'
         'destination=${destination.latitude},${destination.longitude}&'
-        'mode=transit&alternatives=true&key=$apiKey&departure_time=1744449793';
+        'mode=transit&alternatives=true&key=$apiKey';
 
     final response = await _safeHttpGet(url, errorContext: 'getTransitRoutePolylines');
     if (response == null) return null;
@@ -680,7 +680,7 @@ class MapsService {
     final url = 'https://maps.googleapis.com/maps/api/directions/json?'
         'origin=${origin.latitude},${origin.longitude}&'
         'destination=${destination.latitude},${destination.longitude}&'
-        'mode=$mode&key=$apiKey&departure_time=1744449793';
+        'mode=$mode&key=$apiKey';
 
     final response = await _safeHttpGet(url, errorContext: 'getRoutePolylines');
     if (response == null) return null;

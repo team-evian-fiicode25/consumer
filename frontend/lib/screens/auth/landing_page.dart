@@ -12,10 +12,11 @@ class LandingPage extends StatefulWidget {
 class _LandingPageState extends State<LandingPage> {
   final PageController _pageController = PageController();
   final List<String> _carouselImages = [
-    'https://picsum.photos/800/400?image=1011',
-    'https://picsum.photos/800/400?image=1033',
-    'https://picsum.photos/800/400?image=1045',
+    'assets/images/home_landing_page.png',
+    'assets/images/settings_landing_page.png',
+    'assets/images/awards_landing_page.png',
   ];
+
   int _currentIndex = 0;
   Timer? _carouselTimer;
 
@@ -59,10 +60,10 @@ class _LandingPageState extends State<LandingPage> {
         color: Colors.grey[200],
         borderRadius: BorderRadius.circular(16),
         image: DecorationImage(
-          image: NetworkImage(imageUrl),
+          image: AssetImage(imageUrl),
           fit: BoxFit.cover,
         ),
-      ),
+      )
     );
   }
 
@@ -79,7 +80,7 @@ class _LandingPageState extends State<LandingPage> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         title: Text(
-          'Ride',
+          'RideMe',
           style: textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.bold,
             color: theme.colorScheme.primary,
@@ -195,8 +196,8 @@ class _LandingPageState extends State<LandingPage> {
                     children: _carouselImages.asMap().entries.map((entry) {
                       final isActive = entry.key == _currentIndex;
                       return Container(
-                        width: isActive ? 12 : 8,
-                        height: isActive ? 12 : 8,
+                        width: isActive ? 14 : 8,
+                        height: isActive ? 14 : 8,
                         margin: const EdgeInsets.symmetric(horizontal: 4),
                         decoration: BoxDecoration(
                           color: isActive
