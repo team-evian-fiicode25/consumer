@@ -20,12 +20,10 @@ final GoRouter router = GoRouter(
     final authState = context.read<AuthBloc>().state;
     final String currentPath = state.uri.toString();
 
-    // If user is not authenticated and trying to go to /home -> redirect to /login
     if (authState is! AuthAuthenticated && currentPath == '/home') {
       return '/login';
     }
 
-    // If user is already authenticated, prevent going back to login/register
     if (authState is AuthAuthenticated &&
         (currentPath == '/login' || currentPath == '/register')) {
       return '/home';
@@ -36,14 +34,13 @@ final GoRouter router = GoRouter(
       return query.isNotEmpty ? "/auth?$query" : "/auth";
     }
 
-    return null; // No redirect, proceed normally
+    return null;
   },
   routes: [
     GoRoute(
       path: '/auth',
       name: 'auth-callback',
       builder: (context, state) {
-        // Pass query parameters to the AuthCallbackPage
         return AuthCallbackPage(queryParameters: state.uri.queryParameters);
       },
     ),

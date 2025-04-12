@@ -1,4 +1,3 @@
-import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -8,7 +7,6 @@ import '../../bloc/auth/auth_bloc.dart';
 import '../../bloc/auth/auth_event.dart';
 import '../../bloc/auth/auth_state.dart';
 import '../../core/models/user_register.dart';
-import '../widgets/custom_text_field.dart';
 import 'terms_policies_page.dart';
 import '../widgets/gradient_background.dart';
 
@@ -447,52 +445,6 @@ class _RegisterPageState extends State<RegisterPage> {
               },
             ),
           ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildFormContent() {
-    return Form(
-      key: _formKey,
-      child: Column(
-        children: [
-          if (_currentStep == 0) _buildEmailStep(),
-          if (_currentStep == 1) _buildAdditionalFieldsStep(),
-          const SizedBox(height: 24),
-          Row(
-            children: [
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: _onContinue,
-                  child: Text(_currentStep == 0 ? 'Continue' : 'Sign Up'),
-                ),
-              ),
-              const SizedBox(width: 12),
-              if (_currentStep > 0)
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: _onCancel,
-                    child: const Text('Back'),
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          _buildSignInLink(context),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSignInLink(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        const Text("Already have an account?"),
-        TextButton(
-          onPressed: () => context.goNamed('login'),
-          child: const Text('Sign In'),
         ),
       ],
     );
