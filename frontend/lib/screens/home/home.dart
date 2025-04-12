@@ -8,8 +8,6 @@ import 'components/transport_mode_options.dart';
 import 'components/navigation_controls.dart';
 import 'components/destination_shortcuts.dart';
 import 'components/destination_search_bar.dart';
-import 'helpers/location_helper.dart';
-import 'helpers/navigation_helper.dart';
 import 'helpers/route_helper.dart';
 import 'helpers/map_ui_helper.dart';
 import 'helpers/state_manager.dart';
@@ -30,7 +28,7 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    
+
     _state = MapState(
       currentLocation: const LatLng(44.31302218631675, 23.833631876187884),
       transportMode: "driving",
@@ -43,17 +41,17 @@ class _HomePageState extends State<HomePage> {
       userLocationMarker: {},
       transitDetails: [],
     );
-    
+
     _stateManager = StateManager(
       initialState: _state,
       onStateUpdate: _onStateUpdate,
       mapsService: _mapsService,
       context: context,
     );
-    
+
     _initialize();
   }
-  
+
   void _onStateUpdate(MapState newState) {
     if (mounted) {
       setState(() {
@@ -79,20 +77,20 @@ class _HomePageState extends State<HomePage> {
         }
       },
     );
-    
+
     await _stateManager.initialize();
   }
 
   Future<void> _animateCameraTo(LatLng location, {double zoom = 16}) async {
     if (!mounted) return;
-    
+
     try {
-      final GoogleMapController controller = await _mapController.future;
-      controller.animateCamera(
-        CameraUpdate.newCameraPosition(
-          CameraPosition(target: location, zoom: zoom),
-        ),
-      );
+    final GoogleMapController controller = await _mapController.future;
+    controller.animateCamera(
+      CameraUpdate.newCameraPosition(
+        CameraPosition(target: location, zoom: zoom),
+      ),
+    );
     } catch (e) {
       debugPrint('Error animating camera: $e');
     }
@@ -101,9 +99,9 @@ class _HomePageState extends State<HomePage> {
   Future<void> _toggleNavigation() async {
     if (mounted) {
       setState(() {});
-    
-      await _stateManager.toggleNavigation();
-    
+
+      _stateManager.toggleNavigation();
+
       if (mounted) {
         setState(() {});
       }
@@ -112,15 +110,15 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _onSearchPressed() async {
     if (!mounted) return;
-    
+
     final result = await RouteHelper.searchAndSelectDestination(
       context,
       _mapsService,
       _state.currentLocation,
     );
-    
+
     if (!mounted) return;
-    
+
     if (result != null) {
       _stateManager.setDestination(result);
       await _animateCameraTo(result);
@@ -129,14 +127,14 @@ class _HomePageState extends State<HomePage> {
 
   void _onShortcutPressed(LatLng location) async {
     if (!mounted) return;
-    
+
     _stateManager.setDestination(location);
     await _animateCameraTo(location);
   }
 
   void _clearDestinationAndRoutes() {
     _stateManager.clearDestination();
-    
+
     if (mounted) {
       setState(() {});
     }
@@ -146,7 +144,7 @@ class _HomePageState extends State<HomePage> {
     if (mounted) {
       setState(() {});
     }
-    
+
     _mapController.future.then((controller) {
       if (mounted) {
         controller.animateCamera(
@@ -166,7 +164,7 @@ class _HomePageState extends State<HomePage> {
 
   void _onStopNavigation() {
     if (!mounted) return;
-    
+
     _stateManager.stopNavigation();
     if (mounted) {
       setState(() {});
@@ -187,19 +185,19 @@ class _HomePageState extends State<HomePage> {
     final theme = Theme.of(context);
     final mediaQuery = MediaQuery.of(context);
     final safeAreaBottom = mediaQuery.padding.bottom;
-    
-    final bool hasTransitDetails = _state.isNavigating && 
-                                 _state.transportMode == "transit" && 
+
+    final bool hasTransitDetails = _state.isNavigating &&
+                                 _state.transportMode == "transit" &&
                                  _state.transitDetails.isNotEmpty;
     final double minBottomPadding = hasTransitDetails ? 160 : 140;
-    
+
     final double bottomSheetHeight = _calculateBottomSheetHeight(
       hasDestination: _state.destination != null,
       isNavigating: _state.isNavigating,
       hasTransitDetails: hasTransitDetails,
       safeAreaBottom: safeAreaBottom,
     );
-        
+
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
       extendBody: true,
@@ -207,18 +205,18 @@ class _HomePageState extends State<HomePage> {
       body: Stack(
         children: [
           _buildMap(theme, minBottomPadding),
-          
+
           if (_state.isLoading && _state.destination != null && _state.polylines.isEmpty)
             MapUIHelper.buildLoadingIndicator(context),
-            
+
           Positioned(
             left: 16,
             top: 50,
             child: _buildMenuButton(theme),
           ),
-            
+
           _buildMyLocationButton(theme, bottomSheetHeight),
-          
+
           _buildNavigationBottomSheet(theme),
         ],
       ),
@@ -228,7 +226,7 @@ class _HomePageState extends State<HomePage> {
   Widget _buildMenuButton(ThemeData theme) {
     return Container(
       decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
+      color: theme.colorScheme.surface,
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
@@ -254,7 +252,7 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
-  
+
   double _calculateBottomSheetHeight({
     required bool hasDestination,
     required bool isNavigating,
@@ -262,18 +260,18 @@ class _HomePageState extends State<HomePage> {
     required double safeAreaBottom,
   }) {
     if (!hasDestination) {
-      return 80 + safeAreaBottom;
+      return 160 + safeAreaBottom;
     }
-    
+
     if (isNavigating) {
-      return hasTransitDetails 
-          ? 200 + safeAreaBottom 
-          : 120 + safeAreaBottom;
+      return hasTransitDetails
+          ? 240 + safeAreaBottom
+          : 150 + safeAreaBottom;
     }
-    
-    return 140 + safeAreaBottom;
+
+    return 410 + safeAreaBottom;
   }
-  
+
   Widget _buildMap(ThemeData theme, double minBottomPadding) {
     return Positioned.fill(
       child: Listener(
@@ -299,10 +297,10 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
-  
+
   Widget _buildMyLocationButton(ThemeData theme, double bottomSheetHeight) {
     return MapUIHelper.buildMyLocationButton(
-      context, 
+      context,
       isFollowing: _state.isFollowing,
       bottomOffset: bottomSheetHeight + 30,
       onPressed: () async {
@@ -315,12 +313,12 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildNavigationBottomSheet(ThemeData theme) {
-    final bool hasTransitDetails = _state.isNavigating && 
-                               _state.transportMode == "transit" && 
+    final bool hasTransitDetails = _state.isNavigating &&
+                               _state.transportMode == "transit" &&
                                _state.transitDetails.isNotEmpty;
-    
+
     final stateKey = ValueKey('navState:${_state.isNavigating}:dest:${_state.destination != null}');
-        
+
     return AnimatedSwitcher(
       key: ValueKey('bottom_sheet_switcher_${_state.isNavigating}_${_state.destination != null}'),
       duration: const Duration(milliseconds: 300),
@@ -329,7 +327,7 @@ class _HomePageState extends State<HomePage> {
             position: Tween<Offset>(
               begin: const Offset(0, 1),
               end: Offset.zero,
-            ).animate(animation), 
+            ).animate(animation),
             child: child
           ),
       child: KeyedSubtree(
@@ -340,43 +338,58 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
-  
+
   Widget _buildDestinationSheet(ThemeData theme, bool hasTransitDetails) {
     final String keyString = "destination_sheet_${_state.isNavigating ? 'active' : 'inactive'}_${_state.transportMode}";
-    
+    final screenWidth = MediaQuery.of(context).size.width;
+
     return Container(
       key: ValueKey(keyString),
-      alignment: Alignment.bottomCenter,
-      child: Container(
-        width: MediaQuery.of(context).size.width,
-        decoration: BoxDecoration(
+            alignment: Alignment.bottomCenter,
+                  child: Container(
+        width: screenWidth,
+                    decoration: BoxDecoration(
           color: theme.colorScheme.surface,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withAlpha(40),
-              blurRadius: 8,
-              offset: const Offset(0, -2),
-            ),
-          ],
-        ),
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                      boxShadow: [
+                        BoxShadow(
+              color: Colors.black.withAlpha(30),
+                          blurRadius: 10,
+              spreadRadius: 1,
+              offset: const Offset(0, -3),
+                        ),
+                      ],
+                    ),
         child: SafeArea(
           top: false,
           bottom: true,
           maintainBottomViewPadding: true,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+              Container(
+                margin: const EdgeInsets.only(top: 8, bottom: 4),
+                width: 40,
+                height: 4,
+                            decoration: BoxDecoration(
+                  color: Colors.grey.withOpacity(0.3),
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+
               Padding(
-                padding: const EdgeInsets.fromLTRB(8, 8, 16, 3),
+                padding: const EdgeInsets.fromLTRB(8, 8, 16, 4),
                 child: Row(
-                  children: [
+                          children: [
                     if (!_state.isNavigating)
                       IconButton(
                         icon: const Icon(Icons.arrow_back),
                         onPressed: _clearDestinationAndRoutes,
                         tooltip: 'Clear destination',
-                        iconSize: 20,
+                        iconSize: 22,
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                        visualDensity: VisualDensity.compact,
                       ),
                     Expanded(
                       child: DestinationSearchBar(
@@ -385,40 +398,38 @@ class _HomePageState extends State<HomePage> {
                         onSearchPressed: _onSearchPressed,
                         onNavigationStop: null,
                       ),
-                    ),
-                  ],
-                ),
+                            ),
+                          ],
+                        ),
               ),
-              
+
               Builder(builder: (context) {
                 final shouldShowOptions = _state.destination != null && !_state.isNavigating;
-                
+
                 return shouldShowOptions
-                  ? TransportModeOptions(
-                      key: ValueKey('transport_options_${_state.isNavigating ? 'hidden' : 'visible'}_${_state.transportMode}'),
-                      currentMode: _state.transportMode,
-                      transportColors: _stateManager.transportColors,
-                      distanceInMeters: LocationHelper.parseDistanceStringToMeters(_state.distance),
-                      onModeSelected: (mode) {
-                        _stateManager.updateTransportMode(mode);
-                      },
+                  ? Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      child: _buildTransportOptions(),
                     )
-                  : const SizedBox(height: 16);
+                  : const SizedBox(height: 8);
               }),
-              
-              NavigationControls(
-                isNavigating: _state.isNavigating,
-                distance: _state.distance,
-                duration: _state.duration,
-                transportMode: _state.transportMode,
-                transportColors: _stateManager.transportColors,
-                onNavigationToggle: _toggleNavigation,
-                onNavigationStop: _state.isNavigating ? _clearDestinationAndRoutes : null,
-                onUpdateDistanceAndTime: () {
-                  _stateManager.updateDistanceAndTime();
-                },
+
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+                child: NavigationControls(
+                  isNavigating: _state.isNavigating,
+                  distance: _state.distance,
+                  duration: _state.duration,
+                  transportMode: _state.transportMode,
+                  transportColors: _stateManager.transportColors,
+                  onNavigationToggle: _toggleNavigation,
+                  onNavigationStop: _state.isNavigating ? _clearDestinationAndRoutes : null,
+                  onUpdateDistanceAndTime: () {
+                    _stateManager.updateDistanceAndTime();
+                  },
+                ),
               ),
-              
+
               if (_state.isNavigating && _state.transportMode == "transit" && _state.transitDetails.isNotEmpty)
                 TransitDetailsCard(
                   transitDetails: _state.transitDetails,
@@ -426,10 +437,13 @@ class _HomePageState extends State<HomePage> {
                   duration: _state.duration,
                   transitColor: _stateManager.transportColors["transit"] ?? Colors.purple.shade700,
                 ),
-                
+
               if (!_state.isNavigating)
-                DestinationShortcuts(
-                  onShortcutSelected: _onShortcutPressed,
+                Padding(
+                  padding: const EdgeInsets.only(top: 4, bottom: 8),
+                  child: DestinationShortcuts(
+                    onShortcutSelected: _onShortcutPressed,
+                  ),
                 ),
             ],
           ),
@@ -437,7 +451,7 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
-  
+
   Widget _buildFixedSheet(ThemeData theme) {
     return Container(
       key: const ValueKey("fixedSheet"),
@@ -465,7 +479,7 @@ class _HomePageState extends State<HomePage> {
                 onSearchPressed: _onSearchPressed,
                 onNavigationStop: null,
               ),
-              
+
               DestinationShortcuts(
                 onShortcutSelected: _onShortcutPressed,
               ),
@@ -476,9 +490,47 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
+  Widget _buildTransportOptions() {
+    return TransportModeOptions(
+      currentMode: _state.transportMode,
+      transportColors: _stateManager.transportColors,
+      onModeSelected: _stateManager.updateTransportMode,
+      distanceInMeters: _state.destination != null && _state.distance != null ?
+          _parseDistance(_state.distance!) : 0,
+      availableModes: _stateManager.availableModes,
+      modeEstimates: _stateManager.modeEstimates,
+    );
+  }
+
+  double _parseDistance(String distanceText) {
+    try {
+      if (distanceText.contains('km')) {
+        final kmValue = double.tryParse(
+          distanceText.replaceAll('km', '').trim()
+        ) ?? 0.0;
+        return kmValue * 1000;
+      } else if (distanceText.contains('m')) {
+        return double.tryParse(
+          distanceText.replaceAll('m', '').trim()
+        ) ?? 0.0;
+      }
+    } catch (e) {
+      debugPrint('Error parsing distance: $e');
+    }
+    return 0.0;
+  }
+
   Map<String, dynamic>? _getCurrentTransitStep() {
     if (_state.transitDetails.isEmpty) return null;
-    
+
+    if (_state.currentTransitStep == null) {
+      return null;
+    }
+
+    if (_state.currentTransitStep is Map<String, dynamic>) {
+      return _state.currentTransitStep as Map<String, dynamic>;
+    }
+
     if (_state.currentTransitStep is int) {
       final int index = _state.currentTransitStep;
       if (index >= 0 && index < _state.transitDetails.length) {
@@ -487,10 +539,9 @@ class _HomePageState extends State<HomePage> {
           return detail;
         }
       }
-      return {'isOnboard': false};
     }
-    
-    return _state.currentTransitStep as Map<String, dynamic>;
+
+    return {'isOnboard': false};
   }
 
   @override
@@ -506,11 +557,6 @@ class _HomePageState extends State<HomePage> {
     }
     _stateManager.dispose();
     super.dispose();
-  }
-  
-  void _onStateChanged() {
-    if (!mounted) return;
-    setState(() {});
   }
 
   @override

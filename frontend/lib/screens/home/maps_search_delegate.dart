@@ -135,8 +135,8 @@ class MapsSearchDelegate extends SearchDelegate<String?> {
       color: theme.colorScheme.background,
       child: FutureBuilder<List<PlaceSuggestion>>(
         future: mapsService.getAutocompleteSuggestions(query, currentLocation: currentLocation),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -162,7 +162,7 @@ class MapsSearchDelegate extends SearchDelegate<String?> {
             );
           }
 
-          if (snapshot.hasError) {
+        if (snapshot.hasError) {
             return Center(
               child: Container(
                 padding: const EdgeInsets.all(24),
@@ -207,8 +207,8 @@ class MapsSearchDelegate extends SearchDelegate<String?> {
             );
           }
 
-          final suggestions = snapshot.data ?? [];
-          if (suggestions.isEmpty) {
+        final suggestions = snapshot.data ?? [];
+        if (suggestions.isEmpty) {
             if (snapshot.connectionState == ConnectionState.done && 
                 !snapshot.hasError && 
                 query.length >= 3) {
@@ -292,9 +292,9 @@ class MapsSearchDelegate extends SearchDelegate<String?> {
           return Padding(
             padding: const EdgeInsets.only(top: 4),
             child: ListView.builder(
-              itemCount: suggestions.length,
-              itemBuilder: (context, index) {
-                final suggestion = suggestions[index];
+          itemCount: suggestions.length,
+          itemBuilder: (context, index) {
+            final suggestion = suggestions[index];
                 final hasDistanceInfo = suggestion.distance != null && suggestion.duration != null;
                 
                 return Container(
@@ -316,9 +316,9 @@ class MapsSearchDelegate extends SearchDelegate<String?> {
                   child: Material(
                     color: Colors.transparent,
                     child: InkWell(
-                      onTap: () {
-                        close(context, suggestion.description);
-                      },
+              onTap: () {
+                close(context, suggestion.description);
+              },
                       borderRadius: BorderRadius.circular(12),
                       child: Padding(
                         padding: const EdgeInsets.all(16),

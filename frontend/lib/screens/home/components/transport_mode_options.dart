@@ -1,178 +1,224 @@
 import 'package:flutter/material.dart';
 
-class TransportModeOptions extends StatelessWidget {
+class TransportModeOptions extends StatefulWidget {
   final String currentMode;
   final Map<String, Color> transportColors;
-  final double distanceInMeters;
   final Function(String) onModeSelected;
+  final double distanceInMeters;
+  final Map<String, bool>? availableModes;
+  final Map<String, Map<String, String>>? modeEstimates;
 
   const TransportModeOptions({
-    super.key,
+    Key? key,
     required this.currentMode,
     required this.transportColors,
-    required this.distanceInMeters,
     required this.onModeSelected,
-  });
+    this.distanceInMeters = 0,
+    this.availableModes,
+    this.modeEstimates,
+  }) : super(key: key);
 
-  bool _isTransitAppropriate() => distanceInMeters > 2000;
-  
-  bool _isWalkingRecommended() => distanceInMeters < 800;
-  
-  bool _isEcoFriendly(String mode) {
-    return mode == "walking" || mode == "bicycling" || mode == "transit";
+  @override
+  State<TransportModeOptions> createState() => _TransportModeOptionsState();
+}
+
+class _TransportModeOptionsState extends State<TransportModeOptions> {
+  late Map<String, bool> _availableModes;
+
+  @override
+  void initState() {
+    super.initState();
+    _updateAvailableModes();
+  }
+
+  @override
+  void didUpdateWidget(covariant TransportModeOptions oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.distanceInMeters != widget.distanceInMeters ||
+        oldWidget.availableModes != widget.availableModes) {
+      _updateAvailableModes();
+    }
+  }
+
+  void _updateAvailableModes() {
+    _availableModes = {
+      'driving': true,
+      'walking': true,
+      'bicycling': true,
+      'transit': true,
+      'two_wheeler': true,
+      'ridesharing': true,
+    };
+
+    if (widget.availableModes != null) {
+      _availableModes.addAll(widget.availableModes!);
+    }
+  }
+
+  String? _formatDuration(Map<String, String>? estimate) {
+    if (estimate == null || estimate['duration'] == null || estimate['duration']!.isEmpty) {
+      return null;
+    }
+    final durationText = estimate['duration']!;
+    if (durationText == "Not available") return null;
+
+    final parts = durationText.split(' ');
+    if (parts.length >= 2) {
+      if (parts[1].contains('min')) {
+        return '${parts[0]} min';
+      }
+      return durationText.length > 8 ? durationText.substring(0, 8) : durationText;
+    }
+    return durationText;
+  }
+
+  String _unavailableMessage(String mode, String label, Map<String, String>? estimate) {
+    if (mode == 'bicycling' &&
+        estimate != null &&
+        estimate['duration'] == 'Not available' &&
+        estimate['status'] == 'ZERO_RESULTS') {
+      return 'Route not available for bicycling';
+    }
+    return 'No routes available for $label mode';
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8),
+      height: 110,
       padding: const EdgeInsets.symmetric(vertical: 4),
-      decoration: BoxDecoration(
-        border: Border.all(color: Colors.blue.withOpacity(0.3), width: 1),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: SingleChildScrollView(
+      child: ListView(
         scrollDirection: Axis.horizontal,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        physics: const BouncingScrollPhysics(),
+        children: [
+          _buildModeOption(theme, 'driving', 'Car', Icons.directions_car,
+              widget.transportColors['driving'] ?? Colors.blue.shade700,
+              estimate: widget.modeEstimates?['driving']),
+          _buildModeOption(theme, 'walking', 'Walk', Icons.directions_walk,
+              widget.transportColors['walking'] ?? Colors.green.shade700,
+              estimate: widget.modeEstimates?['walking']),
+          _buildModeOption(theme, 'bicycling', 'Bike', Icons.directions_bike,
+              widget.transportColors['bicycling'] ?? Colors.orange.shade700,
+              estimate: widget.modeEstimates?['bicycling']),
+          _buildModeOption(theme, 'transit', 'Transit', Icons.directions_transit,
+              widget.transportColors['transit'] ?? Colors.purple.shade700,
+              estimate: widget.modeEstimates?['transit']),
+          _buildModeOption(theme, 'two_wheeler', 'Motorcycle', Icons.two_wheeler,
+              widget.transportColors['two_wheeler'] ?? Colors.red.shade700,
+              estimate: widget.modeEstimates?['two_wheeler']),
+          _buildModeOption(theme, 'ridesharing', 'Ride', Icons.local_taxi,
+              widget.transportColors['ridesharing'] ?? Colors.green.shade700),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildModeOption(
+      ThemeData theme,
+      String mode,
+      String label,
+      IconData icon,
+      Color color, {
+        Map<String, String>? estimate,
+      }) {
+    final bool isSelected = widget.currentMode == mode;
+    final bool isAvailable = _availableModes[mode] ?? true;
+    final Color displayColor = isAvailable
+        ? (isSelected ? color : Colors.grey.shade700)
+        : Colors.grey.shade400;
+    final String? duration = _formatDuration(estimate);
+    final String unavailableMsg = _unavailableMessage(mode, label, estimate);
+
+    return GestureDetector(
+      onTap: isAvailable
+          ? () => widget.onModeSelected(mode)
+          : () {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(unavailableMsg),
+            duration: const Duration(seconds: 2),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        width: 70,
+        height: 90,
+        margin: const EdgeInsets.symmetric(horizontal: 4),
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        decoration: BoxDecoration(
+          color: isSelected && isAvailable ? color.withOpacity(0.1) : Colors.transparent,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected && isAvailable ? color : Colors.transparent,
+            width: 1,
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            _buildTransportModeButton(
-              context,
-              "driving",
-              Icons.directions_car,
-              "Drive",
+            Stack(
+              alignment: Alignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: isAvailable
+                        ? displayColor.withOpacity(isSelected ? 0.15 : 0.1)
+                        : Colors.grey.shade200,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(icon, color: displayColor, size: 24),
+                ),
+                if (!isAvailable)
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Colors.grey.withOpacity(0.5),
+                    ),
+                    child: const Center(
+                      child: Icon(Icons.not_interested, color: Colors.white, size: 16),
+                    ),
+                  ),
+              ],
             ),
-            _buildTransportModeButton(
-              context,
-              "bicycling",
-              Icons.directions_bike,
-              "Bicycle",
-              isEco: true,
+            const SizedBox(height: 4),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 2),
+              child: Text(
+                label,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  fontWeight: isSelected && isAvailable ? FontWeight.bold : FontWeight.normal,
+                  color: isAvailable ? displayColor : Colors.grey.shade400,
+                  fontSize: 11,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
             ),
-            _buildTransportModeButton(
-              context,
-              "two_wheeler",
-              Icons.motorcycle,
-              "Bike",
-            ),
-            _buildTransportModeButton(
-              context,
-              "walking",
-              Icons.directions_walk,
-              "Walk",
-              recommended: _isWalkingRecommended(),
-              isEco: true,
-            ),
-            _buildTransportModeButton(
-              context,
-              "transit",
-              Icons.directions_transit,
-              "Transit",
-              isEco: true,
-            ),
+            if (duration != null && isAvailable)
+              Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: Text(
+                  duration,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    fontSize: 10,
+                    color: isSelected ? displayColor : Colors.grey.shade600,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
           ],
         ),
       ),
     );
   }
-
-  Widget _buildTransportModeButton(
-    BuildContext context,
-    String mode,
-    IconData icon,
-    String label, {
-    bool disabled = false,
-    bool recommended = false,
-    bool isEco = false,
-  }) {
-    final isSelected = currentMode == mode;
-    final color = transportColors[mode] ?? Colors.grey;
-    final screenWidth = MediaQuery.of(context).size.width;
-    final buttonWidth = (screenWidth - 40) / 5;
-    
-    final tooltipMessage = disabled 
-        ? 'Not recommended for short distances'
-        : recommended 
-            ? 'Recommended for this distance'
-            : isEco
-                ? 'Eco-friendly option'
-                : 'Tap to select';
-    
-    return Tooltip(
-      message: tooltipMessage,
-      child: Container(
-        width: buttonWidth,
-        margin: const EdgeInsets.symmetric(horizontal: 2),
-        child: OutlinedButton(
-          onPressed: disabled ? null : () => onModeSelected(mode),
-          style: OutlinedButton.styleFrom(
-            backgroundColor: isSelected 
-                ? color.withOpacity(0.1) 
-                : null,
-            side: BorderSide(
-              color: isSelected 
-                  ? color 
-                  : isEco && !isSelected 
-                      ? Colors.green.withOpacity(0.5)
-                      : Colors.grey.shade300,
-              width: isSelected ? 2 : 1,
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(24),
-            ),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                icon,
-                color: disabled 
-                    ? Colors.grey 
-                    : isSelected 
-                        ? color 
-                        : Colors.black87,
-                size: 22,
-              ),
-              const SizedBox(height: 4),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Flexible(
-                    child: Text(
-                      label,
-                      style: TextStyle(
-                        color: disabled 
-                            ? Colors.grey 
-                            : isSelected 
-                                ? color 
-                                : Colors.black87,
-                        fontSize: 12,
-                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
-              ),
-              if (isEco)
-                Container(
-                  margin: const EdgeInsets.only(top: 4),
-                  height: 3,
-                  width: 16,
-                  decoration: BoxDecoration(
-                    color: isSelected 
-                        ? color 
-                        : Colors.green.withOpacity(0.7),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-} 
+}

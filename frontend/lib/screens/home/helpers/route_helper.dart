@@ -36,26 +36,6 @@ class RouteHelper {
     }
   }
 
-  static void startDistanceUpdates({
-    required Timer? existingTimer,
-    required LatLng? destination,
-    required Function() updateDistanceAndTime,
-    required Function(Timer?) onTimerUpdated,
-  }) {
-    existingTimer?.cancel();
-    
-    final newTimer = Timer.periodic(const Duration(seconds: 10), (timer) {
-      if (destination != null) {
-        updateDistanceAndTime();
-      } else {
-        timer.cancel();
-        onTimerUpdated(null);
-      }
-    });
-    
-    onTimerUpdated(newTimer);
-  }
-
   static Future<LatLng?> searchAndSelectDestination(
     BuildContext context,
     MapsService mapsService,

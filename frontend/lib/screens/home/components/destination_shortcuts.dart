@@ -14,69 +14,113 @@ class DestinationShortcuts extends StatelessWidget {
     final theme = Theme.of(context);
     
     return Container(
-      height: 36,
-      margin: const EdgeInsets.fromLTRB(16, 1, 16, 5),
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        padding: EdgeInsets.zero,
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          _buildCompactShortcut(
-              theme,
-              "Home",
-              Icons.home,
-              const LatLng(44.31302218631675, 23.833631876187884)),
-          const SizedBox(width: 8),
-          _buildCompactShortcut(theme, "Work", Icons.work,
-              const LatLng(44.314, 23.834)),
-          const SizedBox(width: 8),
-          _buildCompactShortcut(theme, "Gym", Icons.fitness_center,
-              const LatLng(44.315, 23.835)),
-          const SizedBox(width: 8),
-          _buildCompactShortcut(theme, "Shopping", Icons.shopping_bag,
-              const LatLng(44.316, 23.836)),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Text(
+              'Quick destinations',
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: theme.colorScheme.onSurface.withOpacity(0.8),
+              ),
+            ),
+          ),
+          SizedBox(
+            height: 100,
+            child: ListView(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              children: [
+                _buildShortcut(
+                  theme,
+                  'University',
+                  Icons.school,
+                  Colors.blue.shade700,
+                  const LatLng(44.317863, 23.803995),
+                ),
+                _buildShortcut(
+                  theme,
+                  'Park',
+                  Icons.park,
+                  Colors.green.shade600,
+                  const LatLng(44.323022, 23.832363),
+                ),
+                _buildShortcut(
+                  theme,
+                  'Mall',
+                  Icons.shopping_bag,
+                  Colors.purple.shade600,
+                  const LatLng(44.316494, 23.795797),
+                ),
+                _buildShortcut(
+                  theme,
+                  'Hospital',
+                  Icons.local_hospital,
+                  Colors.red.shade600,
+                  const LatLng(44.313901, 23.816483),
+                ),
+                _buildShortcut(
+                  theme,
+                  'Market',
+                  Icons.shopping_cart,
+                  Colors.amber.shade700,
+                  const LatLng(44.311523, 23.803779),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildCompactShortcut(
-      ThemeData theme, String label, IconData icon, LatLng destination) {
-    return InkWell(
-      onTap: () => onShortcutSelected(destination),
-      borderRadius: BorderRadius.circular(16),
+  Widget _buildShortcut(
+    ThemeData theme,
+    String label,
+    IconData icon,
+    Color color,
+    LatLng location,
+  ) {
+    return GestureDetector(
+      onTap: () => onShortcutSelected(location),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        width: 80,
+        margin: const EdgeInsets.only(right: 12),
         decoration: BoxDecoration(
           color: theme.colorScheme.surface,
           borderRadius: BorderRadius.circular(16),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withAlpha(15),
-              blurRadius: 4,
-              offset: const Offset(0, 1),
-            ),
-          ],
           border: Border.all(
-            color: Colors.grey.shade200,
+            color: color.withOpacity(0.3),
             width: 1,
           ),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              icon,
-              color: theme.colorScheme.primary,
-              size: 16,
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                icon,
+                color: color,
+                size: 28,
+              ),
             ),
-            const SizedBox(width: 5),
+            const SizedBox(height: 8),
             Text(
               label,
-              style: theme.textTheme.bodyMedium?.copyWith(
+              style: theme.textTheme.bodySmall?.copyWith(
                 fontWeight: FontWeight.w500,
-                color: theme.colorScheme.onSurface,
-                fontSize: 13,
               ),
+              textAlign: TextAlign.center,
             ),
           ],
         ),
