@@ -9,13 +9,13 @@ import (
 )
 
 func main() {
-    dsn := os.Getenv("POSTGRES_CONNECTION");
+	dsn := os.Getenv("POSTGRES_CONNECTION")
 
-    if dsn == "" {
-        log.Fatalln("Missing required env variable: POSTGRES_CONNECTION")
-    }
+	if dsn == "" {
+		log.Fatalln("Missing required env variable: POSTGRES_CONNECTION")
+	}
 
-    database.InitDB(dsn)
+	database.InitDB(dsn)
 
 	apis.SetupRoutes()
 }
