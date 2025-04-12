@@ -4,8 +4,6 @@ import 'package:geolocator/geolocator.dart';
 import 'dart:async';
 
 class GeoLocationService {
-  static Position? _lastKnownPosition;
-
   static Future<LatLng?> getCurrentLocation() async {
     bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
@@ -27,8 +25,7 @@ class GeoLocationService {
     final position = await Geolocator.getCurrentPosition(
       desiredAccuracy: LocationAccuracy.high,
     );
-    
-    _lastKnownPosition = position;
+
     return LatLng(position.latitude, position.longitude);
   }
   
@@ -39,7 +36,6 @@ class GeoLocationService {
         distanceFilter: highAccuracy ? 5 : 10,
       ),
     ).map((Position position) {
-      _lastKnownPosition = position;
       return LatLng(position.latitude, position.longitude);
     });
   }

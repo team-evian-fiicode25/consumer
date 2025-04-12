@@ -162,15 +162,6 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  void _onStopNavigation() {
-    if (!mounted) return;
-
-    _stateManager.stopNavigation();
-    if (mounted) {
-      setState(() {});
-    }
-  }
-
   void _onMapCreated(GoogleMapController controller) {
     if (!_mapController.isCompleted) {
       _mapController.complete(controller);

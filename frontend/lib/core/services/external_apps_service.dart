@@ -4,22 +4,6 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'dart:io';
 
 class ExternalAppsService {
-  static final GlobalKey<ScaffoldMessengerState> _scaffoldMessengerKey =
-      GlobalKey<ScaffoldMessengerState>();
-  
-  static void _showMessage(String message) {
-    try {
-      _scaffoldMessengerKey.currentState?.showSnackBar(
-        SnackBar(
-          content: Text(message),
-          duration: const Duration(seconds: 3),
-        ),
-      );
-    } catch (e) {
-      debugPrint('MESSAGE: $message');
-    }
-  }
-
   static Future<bool> _openBoltAppStore() async {
     try {
       if (Platform.isAndroid) {

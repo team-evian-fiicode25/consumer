@@ -93,7 +93,6 @@ class StateManager {
 
   DateTime? _navigationStartTime;
   bool _isOnTransit = false;
-  int _currentTransitStopIndex = -1;
   String _previousTransportMode = "driving";
 
   final Map<String, Map<String, String>> _modeEstimates = {
@@ -491,7 +490,6 @@ class StateManager {
     _distanceTimer?.cancel();
     _navigationStartTime = null;
     _isOnTransit = false;
-    _currentTransitStopIndex = -1;
     updateState((state) => state.copyWith(
       transitDetails: [],
       transitStops: {},
@@ -507,7 +505,6 @@ class StateManager {
     _distanceTimer?.cancel();
     _navigationStartTime = null;
     _isOnTransit = false;
-    _currentTransitStopIndex = -1;
     updateState((state) => state.copyWith(
       destination: () => null,
       isNavigating: false,
@@ -887,7 +884,6 @@ class StateManager {
     if (!_isOnTransit || _state.transitDetails.isEmpty) return 0;
     try {
       final currentStep = _getCurrentTransitStep();
-      if (currentStep is! Map) return 0;
       int currentIndex = -1;
       for (int i = 0; i < _state.transitDetails.length; i++) {
         final detail = _state.transitDetails[i];

@@ -69,7 +69,6 @@ class MapsSearchDelegate extends SearchDelegate<String?> {
   @override
   Widget buildSuggestions(BuildContext context) {
     final theme = Theme.of(context);
-    final size = MediaQuery.of(context).size;
     
     if (query.isEmpty) {
       return Container(
@@ -400,9 +399,6 @@ class MapsSearchDelegate extends SearchDelegate<String?> {
     required Color color,
   }) {
     final theme = Theme.of(context);
-    final textColor = color.computeLuminance() > 0.5 ? 
-        Color.lerp(color, Colors.black, 0.7)! : 
-        Color.lerp(color, Colors.white, 0.7)!;
         
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
