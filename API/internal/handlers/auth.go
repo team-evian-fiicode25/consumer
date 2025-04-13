@@ -4,18 +4,19 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"regexp"
 
 	"github.com/team-evian-fiicode25/consumer/API/internal/models"
 	"github.com/team-evian-fiicode25/consumer/API/internal/services"
 )
 
 type AuthHandler struct {
-	consumerService *services.AuthService
+	authService *services.AuthService
 }
 
 func NewAuthHandler(client *services.AuthService) *AuthHandler {
 	return &AuthHandler{
-		consumerService: client,
+		authService: client,
 	}
 }
 
@@ -32,7 +33,7 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sessionId, err := h.consumerService.CreateLogin(context.Background(), request.Username, request.Email, request.Phone_number, request.Password)
+	sessionId, err := h.authService.CreateLogin(context.Background(), request.Username, request.Email, request.Phone_number, request.Password)
 	if err != nil {
 		response.Error = err.Error()
 		w.WriteHeader(http.StatusInternalServerError)
@@ -63,7 +64,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	sessionToken, err := h.consumerService.LogInWithPassword(context.Background(), request.Identifier, request.Password)
+	sessionToken, err := h.authService.LogInWithPassword(context.Background(), request.Identifier, request.Password)
 	if err != nil {
 		response.Error = err.Error()
 
@@ -78,4 +79,18 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(response)
+}
+
+func (h *AuthHandler) AuthMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		header := r.Header.Get("Authorization")
+		match := regexp.MustCompile(`^Bearer\s+(\S+)$`).FindStringSubmatch(header)
+
+		if match == nil || !h.authService.VerifyToken(r.Context(), match[1]) {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
 }

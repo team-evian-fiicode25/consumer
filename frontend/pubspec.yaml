@@ -45,6 +45,7 @@ dependencies:
   shared_preferences: ^2.2.2
   equatable: any
   image_picker: ^1.0.4
+  location: ^5.0.3
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -72,6 +73,7 @@ flutter:
   assets:
     - assets/legal/terms_of_service.txt
     - assets/legal/privacy_policy.txt
+    - assets/images/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

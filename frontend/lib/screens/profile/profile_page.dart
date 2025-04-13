@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -21,8 +20,8 @@ class _ProfilePageState extends State<ProfilePage> {
   
   // TODO (mihaescuvlad): Add a method to fetch the user data from Mongo
   final String _initialUsername = 'testing_account';
-  String _initialEmail = 'tester@google.com';
-  final String _initialPhone = '+40759000111';
+  String _initialEmail = 'test@test.com';
+  final String _initialPhone = '+40773388147';
   
   bool _usernameChanged = false;
   bool _emailChanged = false;
@@ -267,8 +266,6 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<PermissionStatus> _getStoragePermission() async {
-    // Android 13+ (SDK 33+) -> Request photos permission
-    // Older -> Request storage permission
     try {
       final photosStatus = await Permission.photos.request();
       if (photosStatus != PermissionStatus.permanentlyDenied) {

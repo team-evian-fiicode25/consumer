@@ -13,3 +13,6 @@ deployment doesn't work anyway
 
 # v0.1.0
 Initial backend that covers authentication needs
+
+# v0.2.0
+Add incidents support

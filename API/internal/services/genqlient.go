@@ -1022,6 +1022,150 @@ func (v *LogInWithUsernameResponse) __premarshalJSON() (*__premarshalLogInWithUs
 	return &retval, nil
 }
 
+// VerifyTokenLoginIQueryableLogin includes the requested fields of the GraphQL interface IQueryableLogin.
+//
+// VerifyTokenLoginIQueryableLogin is implemented by the following types:
+// VerifyTokenLoginQueryableLogin
+type VerifyTokenLoginIQueryableLogin interface {
+	implementsGraphQLInterfaceVerifyTokenLoginIQueryableLogin()
+	// GetTypename returns the receiver's concrete GraphQL type-name (see interface doc for possible values).
+	GetTypename() string
+	// GetId returns the interface-field "id" from its implementation.
+	GetId() string
+}
+
+func (v *VerifyTokenLoginQueryableLogin) implementsGraphQLInterfaceVerifyTokenLoginIQueryableLogin() {
+}
+
+func __unmarshalVerifyTokenLoginIQueryableLogin(b []byte, v *VerifyTokenLoginIQueryableLogin) error {
+	if string(b) == "null" {
+		return nil
+	}
+
+	var tn struct {
+		TypeName string `json:"__typename"`
+	}
+	err := json.Unmarshal(b, &tn)
+	if err != nil {
+		return err
+	}
+
+	switch tn.TypeName {
+	case "QueryableLogin":
+		*v = new(VerifyTokenLoginQueryableLogin)
+		return json.Unmarshal(b, *v)
+	case "":
+		return fmt.Errorf(
+			"response was missing IQueryableLogin.__typename")
+	default:
+		return fmt.Errorf(
+			`unexpected concrete type for VerifyTokenLoginIQueryableLogin: "%v"`, tn.TypeName)
+	}
+}
+
+func __marshalVerifyTokenLoginIQueryableLogin(v *VerifyTokenLoginIQueryableLogin) ([]byte, error) {
+
+	var typename string
+	switch v := (*v).(type) {
+	case *VerifyTokenLoginQueryableLogin:
+		typename = "QueryableLogin"
+
+		result := struct {
+			TypeName string `json:"__typename"`
+			*VerifyTokenLoginQueryableLogin
+		}{typename, v}
+		return json.Marshal(result)
+	case nil:
+		return []byte("null"), nil
+	default:
+		return nil, fmt.Errorf(
+			`unexpected concrete type for VerifyTokenLoginIQueryableLogin: "%T"`, v)
+	}
+}
+
+// VerifyTokenLoginQueryableLogin includes the requested fields of the GraphQL type QueryableLogin.
+type VerifyTokenLoginQueryableLogin struct {
+	Typename string `json:"__typename"`
+	Id       string `json:"id"`
+}
+
+// GetTypename returns VerifyTokenLoginQueryableLogin.Typename, and is useful for accessing the field via an interface.
+func (v *VerifyTokenLoginQueryableLogin) GetTypename() string { return v.Typename }
+
+// GetId returns VerifyTokenLoginQueryableLogin.Id, and is useful for accessing the field via an interface.
+func (v *VerifyTokenLoginQueryableLogin) GetId() string { return v.Id }
+
+// VerifyTokenResponse is returned by VerifyToken on success.
+type VerifyTokenResponse struct {
+	Login VerifyTokenLoginIQueryableLogin `json:"-"`
+}
+
+// GetLogin returns VerifyTokenResponse.Login, and is useful for accessing the field via an interface.
+func (v *VerifyTokenResponse) GetLogin() VerifyTokenLoginIQueryableLogin { return v.Login }
+
+func (v *VerifyTokenResponse) UnmarshalJSON(b []byte) error {
+
+	if string(b) == "null" {
+		return nil
+	}
+
+	var firstPass struct {
+		*VerifyTokenResponse
+		Login json.RawMessage `json:"login"`
+		graphql.NoUnmarshalJSON
+	}
+	firstPass.VerifyTokenResponse = v
+
+	err := json.Unmarshal(b, &firstPass)
+	if err != nil {
+		return err
+	}
+
+	{
+		dst := &v.Login
+		src := firstPass.Login
+		if len(src) != 0 && string(src) != "null" {
+			err = __unmarshalVerifyTokenLoginIQueryableLogin(
+				src, dst)
+			if err != nil {
+				return fmt.Errorf(
+					"unable to unmarshal VerifyTokenResponse.Login: %w", err)
+			}
+		}
+	}
+	return nil
+}
+
+type __premarshalVerifyTokenResponse struct {
+	Login json.RawMessage `json:"login"`
+}
+
+func (v *VerifyTokenResponse) MarshalJSON() ([]byte, error) {
+	premarshaled, err := v.__premarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	return json.Marshal(premarshaled)
+}
+
+func (v *VerifyTokenResponse) __premarshalJSON() (*__premarshalVerifyTokenResponse, error) {
+	var retval __premarshalVerifyTokenResponse
+
+	{
+
+		dst := &retval.Login
+		src := v.Login
+		var err error
+		*dst, err = __marshalVerifyTokenLoginIQueryableLogin(
+			&src)
+		if err != nil {
+			return nil, fmt.Errorf(
+				"unable to marshal VerifyTokenResponse.Login: %w", err)
+		}
+	}
+	return &retval, nil
+}
+
 // __CreateLoginInput is used internally by genqlient
 type __CreateLoginInput struct {
 	Username    string `json:"username"`
@@ -1065,6 +1209,14 @@ func (v *__LogInWithUsernameInput) GetUsername() string { return v.Username }
 
 // GetPassword returns __LogInWithUsernameInput.Password, and is useful for accessing the field via an interface.
 func (v *__LogInWithUsernameInput) GetPassword() string { return v.Password }
+
+// __VerifyTokenInput is used internally by genqlient
+type __VerifyTokenInput struct {
+	SessionToken string `json:"sessionToken"`
+}
+
+// GetSessionToken returns __VerifyTokenInput.SessionToken, and is useful for accessing the field via an interface.
+func (v *__VerifyTokenInput) GetSessionToken() string { return v.SessionToken }
 
 // The mutation executed by CreateLogin.
 const CreateLogin_Operation = `
@@ -1185,6 +1337,41 @@ func LogInWithUsername(
 	}
 
 	data_ = &LogInWithUsernameResponse{}
+	resp_ := &graphql.Response{Data: data_}
+
+	err_ = client_.MakeRequest(
+		ctx_,
+		req_,
+		resp_,
+	)
+
+	return data_, err_
+}
+
+// The query executed by VerifyToken.
+const VerifyToken_Operation = `
+query VerifyToken ($sessionToken: String!) {
+	login(sessionToken: $sessionToken) {
+		__typename
+		id
+	}
+}
+`
+
+func VerifyToken(
+	ctx_ context.Context,
+	client_ graphql.Client,
+	sessionToken string,
+) (data_ *VerifyTokenResponse, err_ error) {
+	req_ := &graphql.Request{
+		OpName: "VerifyToken",
+		Query:  VerifyToken_Operation,
+		Variables: &__VerifyTokenInput{
+			SessionToken: sessionToken,
+		},
+	}
+
+	data_ = &VerifyTokenResponse{}
 	resp_ := &graphql.Response{Data: data_}
 
 	err_ = client_.MakeRequest(

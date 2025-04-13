@@ -6,8 +6,6 @@ import (
 	"net/http"
 
 	"github.com/Khan/genqlient/graphql"
-	"github.com/team-evian-fiicode25/business-logic/data"
-	"github.com/team-evian-fiicode25/business-logic/user"
 	"github.com/team-evian-fiicode25/consumer/API/internal/config"
 )
 
@@ -27,23 +25,7 @@ func NewAuthService() *AuthService {
 }
 
 func (s *AuthService) CreateLogin(ctx context.Context, username, email, phone_number, password string) (string, error) {
-	resp, err := CreateLogin(ctx, s.client, username, email, phone_number, password)
-
-	if err != nil {
-		return "", err
-	}
-
-	var auth data.AuthData
-
-	auth.Username = resp.NewLogin.GetUsername()
-	auth.AuthID = resp.NewLogin.GetId()
-	auth.Email = resp.NewLogin.GetEmail().GetAddress()
-
-	if phoneNumber := resp.NewLogin.GetPhoneNumber(); phoneNumber != nil {
-		auth.PhoneNumber = phoneNumber.GetNumber()
-	}
-
-	_, err = user.Create(&auth)
+	_, err := CreateLogin(ctx, s.client, username, email, phone_number, password)
 
 	if err != nil {
 		return "", err
@@ -74,4 +56,14 @@ func (s *AuthService) LogInWithPassword(ctx context.Context, identifier string, 
 	}
 
 	return response.LoginSession.GetSessionToken().GetToken(), nil
+}
+
+func (s *AuthService) VerifyToken(ctx context.Context, token string) bool {
+	resp, err := VerifyToken(ctx, s.client, token)
+
+	if err != nil || resp.GetLogin() == nil {
+		return false
+	}
+
+	return true
 }
