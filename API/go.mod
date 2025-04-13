@@ -2,7 +2,11 @@ module github.com/team-evian-fiicode25/consumer/API
 
 go 1.24.0
 
-require github.com/Khan/genqlient v0.8.0
+require (
+	github.com/Khan/genqlient v0.8.0
+	github.com/joho/godotenv v1.5.1
+	github.com/team-evian-fiicode25/business-logic v0.3.0
+)
 
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
@@ -14,7 +18,6 @@ require (
 	github.com/jackc/puddle/v2 v2.2.1 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
-	github.com/team-evian-fiicode25/business-logic v0.2.0 // indirect
 	github.com/vektah/gqlparser/v2 v2.5.19 // indirect
 	golang.org/x/crypto v0.22.0 // indirect
 	golang.org/x/sync v0.12.0 // indirect

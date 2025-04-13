@@ -454,9 +454,9 @@ class MapsService {
     if (suggestionsNeedingLocations.isNotEmpty) {
       try {
         await Future.wait(
-            suggestionsNeedingLocations.map((suggestion) async {
-              suggestion.location = await getPlaceDetails(suggestion.placeId);
-            })
+          suggestionsNeedingLocations.map((suggestion) async {
+            suggestion.location = await getPlaceDetails(suggestion.placeId);
+          }),
         );
       } catch (e) {
         debugPrint('Error fetching place details: $e');
@@ -469,39 +469,26 @@ class MapsService {
 
     if (locationsToProcess.isEmpty) return;
 
-    final suggestion = locationsToProcess[0];
-    final distanceInfo = await getDistanceMatrix(
-        currentLocation,
-        suggestion.location!
-    );
+    for (int i = 0; i < locationsToProcess.length; i++) {
+      if (!await _isInternetAvailable()) break;
 
-    if (distanceInfo != null) {
-      suggestion.distance = distanceInfo['distance'];
-      suggestion.duration = distanceInfo['duration'];
-    }
+      try {
+        final suggestion = locationsToProcess[i];
+        final distanceInfo = await getDistanceMatrix(
+          currentLocation,
+          suggestion.location!,
+        );
 
-    Future.delayed(Duration.zero, () async {
-      for (int i = 1; i < locationsToProcess.length; i++) {
-        if (!await _isInternetAvailable()) break;
-
-        try {
-          final suggestion = locationsToProcess[i];
-          final distanceInfo = await getDistanceMatrix(
-              currentLocation,
-              suggestion.location!
-          );
-
-          if (distanceInfo != null) {
-            suggestion.distance = distanceInfo['distance'];
-            suggestion.duration = distanceInfo['duration'];
-          }
-        } catch (e) {
-          debugPrint('Error getting distance for suggestion $i: $e');
+        if (distanceInfo != null) {
+          suggestion.distance = distanceInfo['distance'];
+          suggestion.duration = distanceInfo['duration'];
         }
-
-        await Future.delayed(const Duration(milliseconds: 100));
+      } catch (e) {
+        debugPrint('Error getting distance for suggestion $i: $e');
       }
-    });
+
+      await Future.delayed(const Duration(milliseconds: 100));
+    }
   }
 
   List<LatLng> _decodePoly(String poly) {

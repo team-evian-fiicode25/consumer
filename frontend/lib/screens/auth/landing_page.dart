@@ -17,6 +17,12 @@ class _LandingPageState extends State<LandingPage> {
     'assets/images/awards_landing_page.png',
   ];
 
+  final List<String> _carouselDescriptions = [
+    'Find the best routes and explore travel options with real-time navigation',
+    'Customize preferences like transport mode, units, and app theme',
+    'Stay motivated by tracking your XP, badges, and contributions',
+  ];
+
   int _currentIndex = 0;
   Timer? _carouselTimer;
 
@@ -63,16 +69,15 @@ class _LandingPageState extends State<LandingPage> {
           image: AssetImage(imageUrl),
           fit: BoxFit.cover,
         ),
-      )
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final textTheme = theme.textTheme;
-    final size = MediaQuery.of(context).size;
-    final isLandscape = size.width > size.height;
+    final mediaQuery = MediaQuery.of(context);
+    final safeAreaBottom = mediaQuery.padding.bottom;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -81,7 +86,7 @@ class _LandingPageState extends State<LandingPage> {
         elevation: 0,
         title: Text(
           'RideMe',
-          style: textTheme.titleLarge?.copyWith(
+          style: theme.textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.bold,
             color: theme.colorScheme.primary,
           ),
@@ -89,174 +94,173 @@ class _LandingPageState extends State<LandingPage> {
         centerTitle: true,
       ),
       body: SafeArea(
-        child: isLandscape
-          ? Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    children: [
-                      Expanded(
-                        child: PageView.builder(
-                          controller: _pageController,
-                          onPageChanged: _onPageChanged,
-                          itemCount: _carouselImages.length,
-                          itemBuilder: (context, index) {
-                            return _buildCarouselItem(_carouselImages[index]);
-                          },
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: _carouselImages.asMap().entries.map((entry) {
-                            final isActive = entry.key == _currentIndex;
-                            return Container(
-                              width: isActive ? 12 : 8,
-                              height: isActive ? 12 : 8,
-                              margin: const EdgeInsets.symmetric(horizontal: 4),
-                              decoration: BoxDecoration(
-                                color: isActive
-                                    ? theme.colorScheme.primary
-                                    : Colors.grey,
-                                shape: BoxShape.circle,
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                      ),
-                    ],
+        child: mediaQuery.size.width > mediaQuery.size.height
+            ? Row(
+          children: [
+            Expanded(
+              child: Column(
+                children: [
+                  Expanded(
+                    child: PageView.builder(
+                      controller: _pageController,
+                      onPageChanged: _onPageChanged,
+                      itemCount: _carouselImages.length,
+                      itemBuilder: (context, index) {
+                        return _buildCarouselItem(_carouselImages[index]);
+                      },
+                    ),
                   ),
-                ),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.all(24.0),
-                    child: Column(
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8.0),
+                    child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          'Your riding app',
-                          style: textTheme.headlineMedium?.copyWith(
-                            color: textTheme.bodyLarge?.color ?? Colors.black,
-                            fontWeight: FontWeight.bold,
+                      children: _carouselImages.asMap().entries.map((entry) {
+                        final isActive = entry.key == _currentIndex;
+                        return Container(
+                          width: isActive ? 12 : 8,
+                          height: isActive ? 12 : 8,
+                          margin: const EdgeInsets.symmetric(horizontal: 4),
+                          decoration: BoxDecoration(
+                            color: isActive
+                                ? theme.colorScheme.primary
+                                : Colors.grey,
+                            shape: BoxShape.circle,
                           ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 32),
-                        SizedBox(
-                          width: double.infinity,
-                          height: 56,
-                          child: ElevatedButton(
-                            onPressed: () => context.goNamed('register'),
-                            style: ElevatedButton.styleFrom(
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            child: const Text('Join for free'),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        SizedBox(
-                          width: double.infinity,
-                          height: 56,
-                          child: OutlinedButton(
-                            onPressed: () => context.goNamed('login'),
-                            style: OutlinedButton.styleFrom(
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            child: const Text('Log in'),
-                          ),
-                        ),
-                      ],
+                        );
+                      }).toList(),
                     ),
                   ),
-                ),
-              ],
-            )
-          : Column(
-              children: [
-                Expanded(
-                  flex: 5,
-                  child: PageView.builder(
-                    controller: _pageController,
-                    onPageChanged: _onPageChanged,
-                    itemCount: _carouselImages.length,
-                    itemBuilder: (context, index) {
-                      return _buildCarouselItem(_carouselImages[index]);
-                    },
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 8.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: _carouselImages.asMap().entries.map((entry) {
-                      final isActive = entry.key == _currentIndex;
-                      return Container(
-                        width: isActive ? 14 : 8,
-                        height: isActive ? 14 : 8,
-                        margin: const EdgeInsets.symmetric(horizontal: 4),
-                        decoration: BoxDecoration(
-                          color: isActive
-                              ? theme.colorScheme.primary
-                              : Colors.grey,
-                          shape: BoxShape.circle,
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                  child: Text(
-                    'Your riding app',
-                    style: textTheme.titleLarge?.copyWith(
-                      color: textTheme.bodyLarge?.color ?? Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-                const Spacer(),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                  child: SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: ElevatedButton(
-                      onPressed: () => context.goNamed('register'),
-                      style: ElevatedButton.styleFrom(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: const Text('Join for free'),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                  child: SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: OutlinedButton(
-                      onPressed: () => context.goNamed('login'),
-                      style: OutlinedButton.styleFrom(
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: const Text('Log in'),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 32),
-              ],
+                ],
+              ),
             ),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      _carouselDescriptions[_currentIndex],
+                      style: theme.textTheme.headlineMedium?.copyWith(
+                        color: theme.textTheme.bodyLarge?.color ?? Colors.black,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 32),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 56,
+                      child: ElevatedButton(
+                        onPressed: () => context.goNamed('register'),
+                        style: ElevatedButton.styleFrom(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text('Join for free'),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 56,
+                      child: OutlinedButton(
+                        onPressed: () => context.goNamed('login'),
+                        style: OutlinedButton.styleFrom(
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: const Text('Log in'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        )
+            : Column(
+          children: [
+            Expanded(
+              flex: 5,
+              child: PageView.builder(
+                controller: _pageController,
+                onPageChanged: _onPageChanged,
+                itemCount: _carouselImages.length,
+                itemBuilder: (context, index) {
+                  return _buildCarouselItem(_carouselImages[index]);
+                },
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: _carouselImages.asMap().entries.map((entry) {
+                  final isActive = entry.key == _currentIndex;
+                  return Container(
+                    width: isActive ? 10 : 8,
+                    height: isActive ? 10 : 8,
+                    margin: const EdgeInsets.symmetric(horizontal: 4),
+                    decoration: BoxDecoration(
+                      color: isActive
+                          ? theme.colorScheme.primary
+                          : Colors.grey,
+                      shape: BoxShape.circle,
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: Text(
+                _carouselDescriptions[_currentIndex],
+                style: theme.textTheme.headlineMedium?.copyWith(
+                  fontSize: 18,
+                  color: theme.textTheme.bodyLarge?.color ?? Colors.white,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+            const Spacer(),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: ElevatedButton(
+                  onPressed: () => context.goNamed('register'),
+                  style: ElevatedButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text('Join for free'),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: SizedBox(
+                width: double.infinity,
+                height: 56,
+                child: OutlinedButton(
+                  onPressed: () => context.goNamed('login'),
+                  style: OutlinedButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  child: const Text('Log in'),
+                ),
+              ),
+            ),
+            const SizedBox(height: 32),
+          ],
+        ),
       ),
     );
   }

@@ -1,10 +1,13 @@
 import 'dart:async';
 import 'dart:math';
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../../../core/services/geo_location.dart';
+import '../../../core/services/incidents_service.dart';
 import '../../../core/services/maps_service.dart';
 import '../../../core/services/external_apps_service.dart';
 import 'location_helper.dart';
@@ -121,6 +124,17 @@ class StateManager {
     'ridesharing': true,
   };
 
+  final List<String> _incidentTypes = ["Accident", "Roadblock", "BadWeather", "Hazard", "Traffic", "Other"];
+  final Map<String, IconData> _incidentIcons = {
+    "Accident": Icons.warning,
+    "Roadblock": Icons.block,
+    "BadWeather": Icons.cloud,
+    "Hazard": Icons.report,
+    "Traffic": Icons.traffic,
+    "Other": Icons.help_outline,
+  };
+
+
   Map<String, bool> get availableModes => _availableModes;
   Map<String, Map<String, String>> get modeEstimates => _modeEstimates;
 
@@ -188,19 +202,13 @@ class StateManager {
     if (location == null) return;
     final currentLocation = location;
     final userMarkers = MapUIHelper.createUserLocationMarkers(currentLocation);
-
     bool isSignificantMove = _previousLocations.isNotEmpty &&
-        LocationHelper.calculateDistanceInMeters(
-          _previousLocations.last,
-          currentLocation,
-        ) > 20;
-
+        LocationHelper.calculateDistanceInMeters(_previousLocations.last, currentLocation) > 20;
     _updateLocationHistory(currentLocation);
     updateState((state) => state.copyWith(
       currentLocation: currentLocation,
       userLocationMarker: userMarkers,
     ));
-
     if (_state.isNavigating && _state.destination != null && isSignificantMove) {
       _calculateRoute();
       updateDistanceAndTime();
@@ -210,9 +218,116 @@ class StateManager {
       _checkTransitStopProximity();
     }
 
+    if (_state.isNavigating) {
+      _fetchIncidents();
+    }
+
     if (_state.isFollowing && _followUserCallback != null) {
       _followUserCallback!(currentLocation);
     }
+  }
+
+  Future<void> _fetchIncidents() async {
+    if (!_state.isNavigating || _state.polylines.isEmpty) return;
+
+    final polyline = _state.polylines.first;
+    final List<Map<String, double>> route = polyline.points
+        .map((p) => {"latitude": p.latitude, "longitude": p.longitude})
+        .toList();
+
+    try {
+      IncidentsService service = IncidentsService();
+      final data = await service.getIncidentsByRoute(route, 50.0);
+      final incidents = data["incidents"] as List;
+
+      Set<Marker> incidentMarkers = {};
+
+      for (var inc in incidents) {
+        final locRaw = inc["Location"] as String;
+        final incidentType = inc["IncidentType"]?.toString() ?? "Other";
+        final parsedLoc = parsePointWKT(locRaw);
+
+        final iconData = _incidentIcons[incidentType] ?? Icons.help_outline;
+        final iconColor = Colors.red.shade800;
+
+        final icon = await getMarkerIconFromIconData(iconData, iconColor, size: 96);
+
+        incidentMarkers.add(
+          Marker(
+            markerId: MarkerId(inc["incidentID"].toString()),
+            position: parsedLoc,
+            infoWindow: InfoWindow(
+              title: incidentType,
+              snippet: inc["description"]?.toString() ?? "",
+            ),
+            icon: icon,
+          ),
+        );
+      }
+
+      updateState((state) => state.copyWith(
+        markers: state.markers.union(incidentMarkers),
+      ));
+    } catch (e) {
+      print("❌ Error fetching incidents: $e");
+    }
+  }
+
+  Future<BitmapDescriptor> getMarkerIconFromIconData(
+      IconData iconData,
+      Color color, {
+        double size = 96,
+      }) async {
+    final pictureRecorder = ui.PictureRecorder();
+    final canvas = Canvas(pictureRecorder);
+    final textPainter = TextPainter(
+      textDirection: TextDirection.ltr,
+    );
+
+    final textSpan = TextSpan(
+      text: String.fromCharCode(iconData.codePoint),
+      style: TextStyle(
+        fontSize: size,
+        fontFamily: iconData.fontFamily,
+        package: iconData.fontPackage,
+        color: color,
+      ),
+    );
+
+    textPainter.text = textSpan;
+    textPainter.layout();
+
+    final offset = Offset(
+      (size - textPainter.width) / 2,
+      (size - textPainter.height) / 2,
+    );
+    textPainter.paint(canvas, offset);
+
+    final image = await pictureRecorder
+        .endRecording()
+        .toImage(size.toInt(), size.toInt());
+
+    final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+    final bytes = byteData!.buffer.asUint8List();
+
+    return BitmapDescriptor.fromBytes(bytes);
+  }
+
+  LatLng parsePointWKT(String wkt) {
+    const prefix = "POINT(";
+    const suffix = ")";
+    if (wkt.startsWith(prefix) && wkt.endsWith(suffix)) {
+      final content = wkt.substring(prefix.length, wkt.length - suffix.length).trim();
+      final parts = content.split(RegExp(r'\s+'));
+      if (parts.length == 2) {
+        final lon = double.tryParse(parts[0]);
+        final lat = double.tryParse(parts[1]);
+        if (lon != null && lat != null) {
+          return LatLng(lat, lon);
+        }
+      }
+    }
+    throw FormatException("Invalid WKT format: $wkt");
   }
 
   void updateState(MapState Function(MapState) updateFunction) {
@@ -233,6 +348,8 @@ class StateManager {
 
     _animateCameraToCallback?.call(_state.currentLocation, zoom: 16);
     await _calculateRoute();
+
+    _onLocationUpdate(_state.currentLocation);
 
     _distanceTimer?.cancel();
     _distanceTimer = Timer.periodic(const Duration(seconds: 3), (_) => updateDistanceAndTime());
@@ -601,12 +718,6 @@ class StateManager {
         ));
         _isOnTransit = true;
         _focusOnFinalTransitDestination();
-        int remainingStops = _countRemainingTransitStops();
-        _showBoardingNotification(
-          detail['line']?.toString() ?? 'transit',
-          detail['type']?.toString() ?? 'vehicle',
-          remainingStops,
-        );
       } else {
         debugPrint('❌ Cannot board: Transit detail at index $index is not a Map');
       }
@@ -632,19 +743,6 @@ class StateManager {
     ));
 
     _updateRoute(preserveTransitDetails: true);
-  }
-
-  void _showBoardingNotification(String line, String type, int remainingStops) {
-    final snackBar = SnackBar(
-      content: Text(
-        'Boarding $line $type. $remainingStops stops until destination.',
-        style: const TextStyle(color: Colors.white),
-      ),
-      backgroundColor: Colors.blue.shade700,
-      duration: const Duration(seconds: 5),
-      action: SnackBarAction(label: 'OK', textColor: Colors.white, onPressed: () {}),
-    );
-    ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 
   void _showNoRoutesFoundMessage(String mode) {

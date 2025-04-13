@@ -1,8 +1,11 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/services/incidents_service.dart';
 import '../../core/services/maps_service.dart';
+import 'components/incident_report_bottom_sheet.dart';
 import 'components/transit_details_card.dart';
 import 'components/transport_mode_options.dart';
 import 'components/navigation_controls.dart';
@@ -31,7 +34,7 @@ class _HomePageState extends State<HomePage> {
 
     _state = MapState(
       currentLocation: const LatLng(44.31302218631675, 23.833631876187884),
-      transportMode: "driving",
+      transportMode: "walking",
       isNavigating: false,
       isFollowing: true,
       isLoading: true,
@@ -206,7 +209,7 @@ class _HomePageState extends State<HomePage> {
             child: _buildMenuButton(theme),
           ),
 
-          _buildMyLocationButton(theme, bottomSheetHeight),
+          _buildFloatingButton(theme, bottomSheetHeight),
 
           _buildNavigationBottomSheet(theme),
         ],
@@ -289,16 +292,26 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildMyLocationButton(ThemeData theme, double bottomSheetHeight) {
-    return MapUIHelper.buildMyLocationButton(
+  Widget _buildFloatingButton(ThemeData theme, double bottomSheetHeight) {
+    if (!_state.isFollowing) {
+      return MapUIHelper.buildMyLocationButton(
+        context,
+        bottomOffset: bottomSheetHeight + 30,
+        onPressed: () async {
+          _stateManager.updateState((state) =>
+              state.copyWith(
+                isFollowing: true,
+              ));
+          await _animateCameraTo(_state.currentLocation, zoom: 18);
+        },
+      );
+    }
+
+    return MapUIHelper.buildReportIncidentButton(
       context,
-      isFollowing: _state.isFollowing,
       bottomOffset: bottomSheetHeight + 30,
       onPressed: () async {
-        _stateManager.updateState((state) => state.copyWith(
-          isFollowing: true,
-        ));
-        await _animateCameraTo(_state.currentLocation, zoom: 18);
+        await showIncidentReportBottomSheet(context, '', _state.currentLocation);
       },
     );
   }
