@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import '../../../core/services/incidents_service.dart';
+import '../../../core/services/noise_alert_service.dart';
 
 class IncidentReportBottomSheet extends StatefulWidget {
   final String userID;
@@ -19,13 +20,14 @@ class IncidentReportBottomSheet extends StatefulWidget {
 class _IncidentReportBottomSheetState extends State<IncidentReportBottomSheet> {
   final TextEditingController _descriptionController = TextEditingController();
   String _selectedIncidentType = "Accident";
-  final List<String> _incidentTypes = ["Accident", "Roadblock", "BadWeather", "Hazard", "Traffic", "Other"];
+  final List<String> _incidentTypes = ["Accident", "Roadblock", "BadWeather", "Hazard", "Traffic", "SurroundingNoise", "Other"];
   final Map<String, IconData> _incidentIcons = {
     "Accident": Icons.warning,
     "Roadblock": Icons.block,
     "BadWeather": Icons.cloud,
     "Hazard": Icons.report,
     "Traffic": Icons.traffic,
+    "SurroundingNoise": Icons.surround_sound,
     "Other": Icons.help_outline,
   };
   bool _isLoading = false;
@@ -144,6 +146,15 @@ class _IncidentReportBottomSheetState extends State<IncidentReportBottomSheet> {
     setState(() { _isLoading = true; });
     try {
       IncidentsService service = IncidentsService();
+      // Future us won't like this, but present us will be happy
+      if(_selectedIncidentType == "SurroundingNoise") {
+        bool noiseDetected = await NoiseAlertService.listenFor10Seconds();
+        if (!noiseDetected) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("No significant noise detected")));
+          setState(() { _isLoading = false; });
+          return;
+        }
+      }
       await service.reportIncident(widget.userID, widget.locationWKT, _descriptionController.text, _selectedIncidentType);
       Navigator.of(context).pop();
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text("Incident reported successfully")));

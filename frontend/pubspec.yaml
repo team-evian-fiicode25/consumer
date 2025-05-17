@@ -46,6 +46,7 @@ dependencies:
   equatable: any
   image_picker: ^1.0.4
   location: ^5.0.3
+  noise_meter: ^5.0.2
 dev_dependencies:
   flutter_test:
     sdk: flutter
