@@ -10,6 +10,8 @@ import 'components/transport_mode_options.dart';
 import 'components/navigation_controls.dart';
 import 'components/destination_shortcuts.dart';
 import 'components/destination_search_bar.dart';
+import 'components/waypoints_editor.dart';
+import 'components/trip_planner.dart';
 import 'helpers/route_helper.dart';
 import 'helpers/map_ui_helper.dart';
 import 'helpers/state_manager.dart';
@@ -93,12 +95,12 @@ class _HomePageState extends State<HomePage> {
     if (!mounted) return;
 
     try {
-      final GoogleMapController controller = await _mapController.future;
-      controller.animateCamera(
-        CameraUpdate.newCameraPosition(
-          CameraPosition(target: location, zoom: zoom),
-        ),
-      );
+    final GoogleMapController controller = await _mapController.future;
+    controller.animateCamera(
+      CameraUpdate.newCameraPosition(
+        CameraPosition(target: location, zoom: zoom),
+      ),
+    );
       _currentZoomLevel = zoom;
     } catch (e) {
       debugPrint('Error animating camera: $e');
@@ -120,6 +122,7 @@ class _HomePageState extends State<HomePage> {
   Future<void> _onSearchPressed() async {
     if (!mounted) return;
 
+    debugPrint('Search pressed...');
     final result = await RouteHelper.searchAndSelectDestination(
       context,
       _mapsService,
@@ -129,7 +132,19 @@ class _HomePageState extends State<HomePage> {
     if (!mounted) return;
 
     if (result != null) {
-      _stateManager.setDestination(result);
+      debugPrint('Selected destination: ${result.latitude}, ${result.longitude}');
+      if (_state.waypoints.isNotEmpty) {
+        await _stateManager.addWaypoint(result);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Added as another waypoint"),
+            duration: Duration(seconds: 2),
+            backgroundColor: Colors.green,
+          )
+        );
+      } else {
+        await _stateManager.setDestination(result);
+      }
       await _animateCameraTo(result);
     }
   }
@@ -400,24 +415,24 @@ class _HomePageState extends State<HomePage> {
         ),
         if (!_state.isFollowing)
           MapUIHelper.buildMyLocationButton(
-            context,
-            bottomOffset: bottomSheetHeight + 30,
-            onPressed: () async {
-              _stateManager.updateState((state) =>
-                  state.copyWith(
-                    isFollowing: true,
-                  ));
+        context,
+        bottomOffset: bottomSheetHeight + 30,
+        onPressed: () async {
+          _stateManager.updateState((state) =>
+              state.copyWith(
+                isFollowing: true,
+              ));
               
               await _animateCameraTo(_state.currentLocation, zoom: 17.5);
-            },
+        },
           )
         else
           MapUIHelper.buildReportIncidentButton(
-            context,
-            bottomOffset: bottomSheetHeight + 30,
-            onPressed: () async {
-              await showIncidentReportBottomSheet(context, '', _state.currentLocation);
-            },
+      context,
+      bottomOffset: bottomSheetHeight + 30,
+      onPressed: () async {
+        await showIncidentReportBottomSheet(context, '', _state.currentLocation);
+      },
           ),
       ],
     );
@@ -453,6 +468,7 @@ class _HomePageState extends State<HomePage> {
   Widget _buildDestinationSheet(ThemeData theme, bool hasTransitDetails) {
     final String keyString = "destination_sheet_${_state.isNavigating ? 'active' : 'inactive'}_${_state.transportMode}";
     final screenWidth = MediaQuery.of(context).size.width;
+    final hasWaypoints = _state.waypoints.isNotEmpty;
 
     return Container(
       key: ValueKey(keyString),
@@ -514,6 +530,23 @@ class _HomePageState extends State<HomePage> {
                         ),
               ),
 
+              if (!_state.isNavigating && hasWaypoints)
+                WaypointsEditor(
+                  waypoints: _state.waypoints,
+                  waypointNames: List.generate(
+                    _state.waypoints.length, 
+                    (index) => "Waypoint ${index + 1}"
+                  ),
+                  onWaypointRemoved: (index) => _stateManager.removeWaypoint(index),
+                  onWaypointsReordered: (oldIndex, newIndex) {
+                    if (oldIndex < newIndex) {
+                      newIndex -= 1;
+                    }
+                    _stateManager.reorderWaypoints(oldIndex, newIndex);
+                  },
+                  onAddWaypoint: _onAddWaypointPressed,
+              ),
+
               Builder(builder: (context) {
                 final shouldShowOptions = _state.destination != null && !_state.isNavigating;
 
@@ -549,7 +582,7 @@ class _HomePageState extends State<HomePage> {
                   transitColor: _stateManager.transportColors["transit"] ?? Colors.purple.shade700,
                 ),
 
-              if (!_state.isNavigating)
+              if (!_state.isNavigating && !hasWaypoints)
                 Padding(
                   padding: const EdgeInsets.only(top: 4, bottom: 8),
                   child: DestinationShortcuts(
@@ -602,7 +635,10 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildTransportOptions() {
-    return TransportModeOptions(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        TransportModeOptions(
       currentMode: _state.transportMode,
       transportColors: _stateManager.transportColors,
       onModeSelected: _stateManager.updateTransportMode,
@@ -610,6 +646,22 @@ class _HomePageState extends State<HomePage> {
           _parseDistance(_state.distance!) : 0,
       availableModes: _stateManager.availableModes,
       modeEstimates: _stateManager.modeEstimates,
+        ),
+        if (_state.destination != null)
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton.icon(
+              onPressed: _showTripPlanner,
+              icon: Icon(Icons.map, size: 16),
+              label: Text("View Trip", style: TextStyle(fontSize: 13)),
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.blue.shade700,
+                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                visualDensity: VisualDensity.compact,
+              ),
+            ),
+          ),
+      ],
     );
   }
 
@@ -692,6 +744,167 @@ class _HomePageState extends State<HomePage> {
     AirQualityService.preloadTilesForLocation(
         _state.currentLocation,
         _stateManager.currentAirQualityMapType
+    );
+  }
+
+  Future<void> _onAddWaypointPressed() async {
+    if (!mounted) return;
+
+    debugPrint('Adding waypoint...');
+    final result = await RouteHelper.searchAndSelectDestination(
+      context,
+      _mapsService,
+      _state.currentLocation,
+      title: 'Add Waypoint',
+    );
+
+    if (!mounted) return;
+
+    if (result != null) {
+      debugPrint('Selected waypoint: ${result.latitude}, ${result.longitude}');
+      await _stateManager.addWaypoint(result);
+      await _animateCameraTo(result);
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Waypoint added to your trip"),
+          duration: Duration(seconds: 2),
+          backgroundColor: Colors.green,
+        )
+      );
+      
+      if (_state.waypoints.length > 1) {
+        Future.delayed(Duration(milliseconds: 300), () {
+          if (mounted) _showTripPlanner();
+        });
+      }
+    }
+  }
+
+  Future<void> _showTripPlanner() async {
+    if (!mounted) return;
+    
+    List<LatLng> displayWaypoints = List.from(_state.waypoints);
+    List<String> waypointNames = [];
+    
+    if (_state.destination != null && displayWaypoints.isEmpty) {
+      displayWaypoints.add(_state.destination!);
+    }
+    
+    debugPrint('Showing trip planner with ${displayWaypoints.length} waypoints');
+    for (int i = 0; i < displayWaypoints.length; i++) {
+      debugPrint('Waypoint $i: ${displayWaypoints[i].latitude}, ${displayWaypoints[i].longitude}');
+    }
+    
+    if (_state.waypoints.isNotEmpty) {
+      waypointNames = _stateManager.getWaypointDisplayNames();
+    } else if (_state.destination != null) {
+      final locationKey = '${_state.destination!.latitude},${_state.destination!.longitude}';
+      final destinationName = _stateManager.waypointNames[locationKey] ?? "Destination";
+      waypointNames = [destinationName];
+    }
+    
+    debugPrint('Waypoint names: $waypointNames');
+    
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16))
+      ),
+      builder: (context) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.7,
+          minChildSize: 0.4,
+          maxChildSize: 0.9,
+          expand: false,
+          builder: (context, scrollController) {
+            return Container(
+              padding: EdgeInsets.only(top: 8),
+              child: Column(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            "Plan Your Trip",
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.close),
+                          onPressed: () => Navigator.pop(context),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Divider(),
+                  Expanded(
+                    child: ListView(
+                      controller: scrollController,
+                      padding: EdgeInsets.all(0),
+                      children: [
+                        TripPlanner(
+                          waypoints: displayWaypoints,
+                          waypointNames: waypointNames,
+                          currentLocation: _state.currentLocation,
+                          onWaypointRemoved: (index) {
+                            if (_state.waypoints.isEmpty && _state.destination != null) {
+                              _stateManager.clearDestination();
+                            } else {
+                              _stateManager.removeWaypoint(index);
+                            }
+                            Navigator.pop(context);
+                          },
+                          onWaypointsReordered: (oldIndex, newIndex) {
+                            if (_state.waypoints.isNotEmpty) {
+                              if (oldIndex < newIndex) {
+                                newIndex -= 1;
+                              }
+                              _stateManager.reorderWaypoints(oldIndex, newIndex);
+                              Navigator.pop(context);
+                              Future.delayed(Duration(milliseconds: 300), () {
+                                if (mounted) _showTripPlanner();
+                              });
+                            }
+                          },
+                          onAddWaypoint: () {
+                            Navigator.pop(context);
+                            _onAddWaypointPressed();
+                          },
+                          onSearchDestination: () {
+                            Navigator.pop(context);
+                            _onSearchPressed();
+                          },
+                          onStartNavigation: () {
+                            Navigator.pop(context);
+                            _toggleNavigation();
+                          },
+                          isLoading: _state.isLoading,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }

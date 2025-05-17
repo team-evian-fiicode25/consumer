@@ -763,4 +763,109 @@ class MapsService {
         return Colors.blue.shade700;
     }
   }
+
+  Future<String?> getAddressFromLocation(LatLng location) async {
+    if (!await _isInternetAvailable()) {
+      return null;
+    }
+
+    final cacheKey = 'rev_geo_${location.latitude},${location.longitude}';
+    
+    if (_cache.containsKey(cacheKey)) {
+      _cache.remove(cacheKey);
+    }
+    
+    final url = 'https://maps.googleapis.com/maps/api/geocode/json?'
+        'latlng=${location.latitude},${location.longitude}&'
+        'key=$apiKey&'
+        'result_type=street_address|route|establishment|point_of_interest|sublocality|neighborhood';
+
+    final response = await _safeHttpGet(url, errorContext: 'getAddressFromLocation');
+    if (response == null) return null;
+
+    if (response.statusCode == 200) {
+      try {
+        final data = json.decode(response.body);
+        if (data['status'] == 'OK' && data['results'].isNotEmpty) {
+          final firstResult = data['results'][0];
+          final formattedAddress = firstResult['formatted_address'] as String;
+          
+          String displayAddress = '';
+          if (firstResult.containsKey('address_components')) {
+            final components = firstResult['address_components'] as List;
+            
+            final streetNumber = components.firstWhere(
+              (comp) => (comp['types'] as List).contains('street_number'),
+              orElse: () => {'short_name': ''}
+            )['short_name'];
+            
+            final route = components.firstWhere(
+              (comp) => (comp['types'] as List).contains('route'),
+              orElse: () => {'short_name': ''}
+            )['short_name'];
+            
+            final poi = components.firstWhere(
+              (comp) => (comp['types'] as List).any((type) => 
+                type == 'point_of_interest' || type == 'establishment'),
+              orElse: () => {'long_name': ''}
+            )['long_name'];
+            
+            final neighborhood = components.firstWhere(
+              (comp) => (comp['types'] as List).any((type) => 
+                type == 'neighborhood' || type == 'sublocality' || type == 'sublocality_level_1'),
+              orElse: () => {'short_name': ''}
+            )['short_name'];
+            
+            final locality = components.firstWhere(
+              (comp) => (comp['types'] as List).contains('locality'),
+              orElse: () => {'short_name': ''}
+            )['short_name'];
+            
+            if (poi.isNotEmpty) {
+              displayAddress = poi;
+              if (neighborhood.isNotEmpty && neighborhood != poi) {
+                displayAddress += ', $neighborhood';
+              }
+            } else if (streetNumber.isNotEmpty && route.isNotEmpty) {
+              displayAddress = '$streetNumber $route';
+              if (neighborhood.isNotEmpty) {
+                displayAddress += ', $neighborhood';
+              }
+            } else if (route.isNotEmpty) {
+              displayAddress = route;
+              if (neighborhood.isNotEmpty) {
+                displayAddress += ', $neighborhood';
+              }
+            } else if (neighborhood.isNotEmpty) {
+              displayAddress = neighborhood;
+              if (locality.isNotEmpty && locality != neighborhood) {
+                displayAddress += ', $locality';
+              }
+            }
+          }
+          
+          if (displayAddress.isEmpty) {
+            final parts = formattedAddress.split(',');
+            if (parts.length >= 2) {
+              displayAddress = '${parts[0].trim()}, ${parts[1].trim()}';
+            } else {
+              displayAddress = formattedAddress;
+            }
+          }
+          
+          _addToCache(cacheKey, displayAddress);
+          
+          return displayAddress;
+        } else {
+          debugPrint('Reverse geocoding error: ${data['status']}');
+        }
+      } catch (e) {
+        debugPrint('Error parsing reverse geocoding data: $e');
+      }
+    } else {
+      debugPrint('HTTP error: ${response.statusCode}');
+    }
+
+    return null;
+  }
 }

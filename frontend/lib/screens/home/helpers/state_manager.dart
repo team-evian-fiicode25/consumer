@@ -17,6 +17,8 @@ import 'map_ui_helper.dart';
 class MapState {
   final LatLng currentLocation;
   final LatLng? destination;
+  final List<LatLng> waypoints;
+  final int currentWaypointIndex;
   final String transportMode;
   final bool isNavigating;
   final bool isFollowing;
@@ -31,10 +33,13 @@ class MapState {
   final dynamic currentTransitStep;
   final Set<TileOverlay> tileOverlays;
   final bool showAirQuality;
+  final List<LatLng> destinationQueue;
 
   const MapState({
     required this.currentLocation,
     this.destination,
+    this.waypoints = const [],
+    this.currentWaypointIndex = 0,
     required this.transportMode,
     required this.isNavigating,
     required this.isFollowing,
@@ -49,11 +54,14 @@ class MapState {
     this.currentTransitStep,
     this.tileOverlays = const {},
     this.showAirQuality = false,
+    this.destinationQueue = const [],
   });
 
   MapState copyWith({
     LatLng? currentLocation,
     LatLng? Function()? destination,
+    List<LatLng>? waypoints,
+    int? currentWaypointIndex,
     String? transportMode,
     bool? isNavigating,
     bool? isFollowing,
@@ -68,10 +76,13 @@ class MapState {
     dynamic currentTransitStep,
     Set<TileOverlay>? tileOverlays,
     bool? showAirQuality,
+    List<LatLng>? destinationQueue,
   }) {
     return MapState(
       currentLocation: currentLocation ?? this.currentLocation,
       destination: destination != null ? destination() : this.destination,
+      waypoints: waypoints ?? this.waypoints,
+      currentWaypointIndex: currentWaypointIndex ?? this.currentWaypointIndex,
       transportMode: transportMode ?? this.transportMode,
       isNavigating: isNavigating ?? this.isNavigating,
       isFollowing: isFollowing ?? this.isFollowing,
@@ -86,7 +97,29 @@ class MapState {
       currentTransitStep: currentTransitStep ?? this.currentTransitStep,
       tileOverlays: tileOverlays ?? this.tileOverlays,
       showAirQuality: showAirQuality ?? this.showAirQuality,
+      destinationQueue: destinationQueue ?? this.destinationQueue,
     );
+  }
+  
+  bool get hasWaypoints => waypoints.isNotEmpty;
+  
+  LatLng? get nextDestination {
+    if (destination != null) {
+      return destination;
+    }
+    
+    if (destinationQueue.isNotEmpty) {
+      return destinationQueue.first;
+    }
+    
+    return null;
+  }
+  
+  LatLng? get finalDestination {
+    if (destinationQueue.isNotEmpty) {
+      return destinationQueue.last;
+    }
+    return destination;
   }
 }
 
@@ -160,6 +193,10 @@ class StateManager {
   final List<LatLng> _previousLocations = [];
   final List<DateTime> _previousLocationTimes = [];
   final int _maxLocationHistorySize = 5;
+
+  final Map<String, String> _waypointNames = {};
+  
+  Map<String, String> get waypointNames => _waypointNames;
 
   StateManager({
     required MapState initialState,
@@ -255,6 +292,12 @@ class StateManager {
     if (!_state.isNavigating || _state.polylines.isEmpty) return;
 
     final polyline = _state.polylines.first;
+    
+    if (polyline.points.length < 2) {
+      debugPrint('Not enough points in route to fetch incidents');
+      return;
+    }
+    
     final List<Map<String, double>> route = polyline.points
         .map((p) => {"latitude": p.latitude, "longitude": p.longitude})
         .toList();
@@ -337,7 +380,7 @@ class StateManager {
         markers: destinationMarker.union(incidentMarkers),
       ));
     } catch (e) {
-      print("❌ Error fetching incidents: $e");
+      debugPrint('Error fetching incidents: $e');
     }
   }
 
@@ -506,12 +549,39 @@ class StateManager {
   }
 
   Future<void> toggleNavigation() async {
-    if (_state.destination == null || _state.isNavigating) {
+    if (_state.isNavigating) {
       stopNavigation();
       return;
     }
+    
+    if (_state.waypoints.isEmpty && _state.destination == null) {
+      return;
+    }
+    
+    List<LatLng> queue = [];
+    
+    if (_state.waypoints.isNotEmpty) {
+      queue.addAll(_state.waypoints);
+    } 
+    else if (_state.destination != null) {
+      queue.add(_state.destination!);
+    }
+    
+    LatLng? currentDestination = null;
+    List<LatLng> remainingQueue = [];
+    
+    if (queue.isNotEmpty) {
+      currentDestination = queue.first;
+      
+      if (queue.length > 1) {
+        remainingQueue = queue.sublist(1);
+      }
+    }
+    
     _navigationStartTime = DateTime.now();
     updateState((state) => state.copyWith(
+      destination: () => currentDestination,
+      destinationQueue: remainingQueue,
       isNavigating: true,
       isFollowing: true,
     ));
@@ -534,182 +604,6 @@ class StateManager {
         _followUserCallback!(_state.currentLocation);
       }
     });
-  }
-
-  Future<void> setDestination(LatLng destinationLocation) async {
-    final bool isSignificantChange =
-        _state.destination == null ||
-            LocationHelper.calculateDistanceInMeters(_state.destination!, destinationLocation) > 100;
-
-    updateState((state) => state.copyWith(
-      isLoading: isSignificantChange,
-      polylines: {},
-      transitDetails: <dynamic>[],
-      transitStops: <Circle>{},
-      isNavigating: false,
-    ));
-
-    try {
-      final destinationMarker = MapUIHelper.createDestinationMarker(destinationLocation);
-      updateState((state) => state.copyWith(
-        destination: () => destinationLocation,
-        markers: {destinationMarker},
-        isLoading: false,
-      ));
-
-      await updateDistanceAndTime();
-
-      if (isSignificantChange) {
-        await _updateAllModeEstimates();
-      }
-    } catch (e) {
-      debugPrint('Error setting destination: $e');
-      updateState((state) => state.copyWith(isLoading: false));
-    }
-  }
-
-  Future<bool> _calculateRoute() async {
-    if (_state.destination == null) return false;
-    final origin = _state.currentLocation;
-    final destination = _state.destination!;
-    final mode = _state.transportMode;
-
-    updateState((state) => state.copyWith(isLoading: true));
-
-    try {
-      final result = await mapsService.getRoutePolylines(
-        origin: origin,
-        destination: destination,
-        mode: mode,
-        avoidAirPollution: _state.showAirQuality,
-      );
-
-      if (result != null && result.isNotEmpty) {
-        bool hasValidRoute = true;
-        if (result.length >= 4 && result[3] is Map<String, dynamic>) {
-          final status = (result[3] as Map<String, dynamic>)['status'];
-          if (status == 'ZERO_RESULTS') hasValidRoute = false;
-        }
-
-        if (hasValidRoute && _state.isNavigating) {
-          final Set<Polyline> polylines = result[0] is Set<Polyline>
-              ? result[0] as Set<Polyline>
-              : <Polyline>{};
-
-          Set<Circle> transitStops = {};
-          List<dynamic> transitDetails = [];
-
-          if (mode == "transit" && result.length >= 3) {
-            final stops = result[1] as List<LatLng>;
-            transitDetails = result[2] as List<dynamic>;
-            for (int i = 0; i < stops.length; i++) {
-              transitStops.add(Circle(
-                circleId: CircleId('transit_stop_$i'),
-                center: stops[i],
-                radius: 8,
-                fillColor: Colors.blue.shade100,
-                strokeColor: Colors.blue.shade700,
-                strokeWidth: 2,
-              ));
-            }
-          }
-
-          if (_state.showAirQuality && result.length >= 4 && result[3] is Map<String, dynamic>) {
-            final isCleanAirRoute = (result[3] as Map<String, dynamic>)['cleanAirRoute'] == true;
-            if (isCleanAirRoute && context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                content: Text('Using route that avoids high pollution areas'),
-                duration: const Duration(seconds: 3),
-                backgroundColor: Colors.green.shade700,
-              ));
-            }
-          }
-
-          updateState((state) => state.copyWith(
-            polylines: polylines,
-            transitStops: transitStops,
-            transitDetails: transitDetails,
-            isLoading: false,
-          ));
-        } else {
-          updateState((state) => state.copyWith(isLoading: false));
-        }
-        return hasValidRoute;
-      }
-    } catch (e) {
-      debugPrint('Error calculating route: $e');
-    }
-
-    updateState((state) => state.copyWith(isLoading: false));
-    return false;
-  }
-
-  Future<void> updateTransportMode(String mode) async {
-    if (mode == _state.transportMode) return;
-
-    if (mode != 'ridesharing') {
-      _previousTransportMode = _state.transportMode;
-    }
-
-    updateState((state) => state.copyWith(
-      transportMode: mode,
-      isLoading: true,
-    ));
-
-    if (mode == 'ridesharing') {
-      if (_state.destination != null) {
-        final didLaunch = await ExternalAppsService.openRideOptionsWithFeedback(
-          context,
-          _state.destination!,
-          origin: _state.currentLocation,
-        );
-        updateState((state) => state.copyWith(
-          transportMode: _previousTransportMode,
-          isLoading: false,
-        ));
-        if (didLaunch == true) clearDestination();
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text("Please set a destination first"),
-          duration: Duration(seconds: 2),
-        ));
-        updateState((state) => state.copyWith(
-          transportMode: _previousTransportMode,
-          isLoading: false,
-        ));
-      }
-    } else {
-      if (_state.destination != null) {
-        if (_modeEstimates.containsKey(mode) &&
-            _modeEstimates[mode]!['distance']?.isNotEmpty == true) {
-          updateState((state) => state.copyWith(
-            distance: () => _modeEstimates[mode]!['distance'],
-            duration: () => _modeEstimates[mode]!['duration'],
-            isLoading: false,
-          ));
-        }
-        bool routeFound = await _calculateRoute();
-        if (mode == 'bicycling' && !routeFound) {
-          _showNoRoutesFoundMessage('bicycling');
-          await _updateAvailableModes();
-          updateState((state) => state.copyWith(
-            transportMode: 'two_wheeler',
-            isLoading: true,
-          ));
-          if (_modeEstimates.containsKey('two_wheeler') &&
-              _modeEstimates['two_wheeler']!['distance']?.isNotEmpty == true) {
-            updateState((state) => state.copyWith(
-              distance: () => _modeEstimates['two_wheeler']!['distance'],
-              duration: () => _modeEstimates['two_wheeler']!['duration'],
-              isLoading: false,
-            ));
-          }
-          await _calculateRoute();
-        }
-      } else {
-        updateState((state) => state.copyWith(isLoading: false));
-      }
-    }
   }
 
   Future<void> updateDistanceAndTime() async {
@@ -748,9 +642,13 @@ class StateManager {
           final parsedDistance = int.tryParse(distance?.split(' ')[0] ?? '');
           if ((distance != null && distance.contains('m') && parsedDistance != null && parsedDistance < 70) ||
               straightLineDistance < 70) {
-            _distanceTimer?.cancel();
-            _showDestinationReachedNotification();
-            clearDestination();
+            
+            if (_state.destinationQueue.isNotEmpty) {
+              _moveToNextDestination();
+            } else {
+              _distanceTimer?.cancel();
+              _showDestinationReachedNotification();
+            }
             return;
           }
         }
@@ -762,6 +660,100 @@ class StateManager {
     } catch (e) {
       debugPrint('Error updating distance and time: $e');
     }
+  }
+  
+  void _moveToNextDestination() {
+    if (_state.destinationQueue.isEmpty) {
+      _distanceTimer?.cancel();
+      _showDestinationReachedNotification();
+      return;
+    }
+    
+    final nextDestination = _state.destinationQueue.first;
+    
+    final newQueue = _state.destinationQueue.length > 1
+        ? _state.destinationQueue.sublist(1) 
+        : <LatLng>[];
+    
+    updateState((state) => state.copyWith(
+      destination: () => nextDestination,
+      destinationQueue: newQueue,
+    ));
+    
+    _calculateRoute();
+    
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Row(
+          children: [
+            Icon(Icons.check_circle, color: Colors.white),
+            SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                'Destination reached! Navigating to next destination.',
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: Colors.green.shade700,
+        duration: Duration(seconds: 3),
+      ));
+    }
+  }
+
+  Future<void> addWaypoint(LatLng waypoint) async {
+    List<LatLng> updatedWaypoints = List.from(_state.waypoints);
+    
+    _fetchAndStoreLocationName(waypoint);
+    
+    if (_state.destination != null && updatedWaypoints.isEmpty) {
+      updatedWaypoints.add(_state.destination!);
+      _fetchAndStoreLocationName(_state.destination!);
+    }
+    
+    updatedWaypoints.add(waypoint);
+    
+    final destinationMarker = MapUIHelper.createDestinationMarker(waypoint);
+    final waypointMarkers = _createWaypointMarkers(updatedWaypoints);
+    
+    updateState((state) => state.copyWith(
+      waypoints: updatedWaypoints,
+      destination: () => waypoint,
+      markers: {destinationMarker, ...waypointMarkers},
+      isLoading: false,
+    ));
+    
+    await _calculateRoute();
+    await updateDistanceAndTime();
+    
+    if (context.mounted) {
+      debugPrint('Added waypoint: ${waypoint.latitude}, ${waypoint.longitude}');
+      debugPrint('Total waypoints: ${updatedWaypoints.length}');
+    }
+  }
+
+  void clearDestination() {
+    _navigationTimer?.cancel();
+    _distanceTimer?.cancel();
+    _navigationStartTime = null;
+    _isOnTransit = false;
+    updateState((state) => state.copyWith(
+      destination: () => null,
+      waypoints: [],
+      destinationQueue: [],
+      currentWaypointIndex: 0,
+      isNavigating: false,
+      isLoading: false,
+      polylines: {},
+      transitDetails: [],
+      transitStops: {},
+      markers: {},
+      distance: () => null,
+      duration: () => null,
+      currentTransitStep: null,
+    ));
+    _animateCameraToCallback?.call(_state.currentLocation, zoom: 16);
   }
 
   @override
@@ -788,26 +780,6 @@ class StateManager {
       currentTransitStep: null,
     ));
     updateDistanceAndTime();
-  }
-
-  void clearDestination() {
-    _navigationTimer?.cancel();
-    _distanceTimer?.cancel();
-    _navigationStartTime = null;
-    _isOnTransit = false;
-    updateState((state) => state.copyWith(
-      destination: () => null,
-      isNavigating: false,
-      isLoading: false,
-      polylines: {},
-      transitDetails: [],
-      transitStops: {},
-      markers: {},
-      distance: () => null,
-      duration: () => null,
-      currentTransitStep: null,
-    ));
-    _animateCameraToCallback?.call(_state.currentLocation, zoom: 16);
   }
 
   void _showDestinationReachedNotification() {
@@ -1288,49 +1260,181 @@ class StateManager {
     return earthRadius * c;
   }
 
-  void _updateRoute({bool preserveTransitDetails = false}) {
-    if (_state.destination == null) return;
-    final savedTransitDetails = preserveTransitDetails && _state.transitDetails.isNotEmpty
-        ? List.from(_state.transitDetails)
-        : null;
-    updateState((state) => state.copyWith(isLoading: true));
-
+  Future<bool> _calculateRoute() async {
+    if (_state.destination == null) return false;
+    
     final origin = _state.currentLocation;
     final destination = _state.destination!;
-    mapsService.getRoutePolylines(
-      origin: origin,
-      destination: destination,
-      mode: _state.transportMode,
-      includeTransitDetails: _state.transportMode == 'transit',
-      avoidAirPollution: _state.showAirQuality,
-    ).then((result) {
-      if (result != null && result.isNotEmpty && result[0] is Set<Polyline>) {
-        final polylines = result[0] as Set<Polyline>;
-        final transitDetails = savedTransitDetails ?? (result.length > 2 ? result[2] as List<dynamic> : []);
-        
-        if (_state.showAirQuality && result.length >= 4 && result[3] is Map<String, dynamic>) {
-          final isCleanAirRoute = (result[3] as Map<String, dynamic>)['cleanAirRoute'] == true;
-          if (isCleanAirRoute && context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: Text('Using route that avoids high pollution areas'),
-              duration: const Duration(seconds: 3),
-              backgroundColor: Colors.green.shade700,
+    final mode = _state.transportMode;
+
+    updateState((state) => state.copyWith(isLoading: true));
+
+    try {
+      final result = await mapsService.getRoutePolylines(
+        origin: origin,
+        destination: destination,
+        mode: mode,
+        avoidAirPollution: _state.showAirQuality,
+      );
+
+      if (result != null && result.isNotEmpty) {
+        bool hasValidRoute = true;
+        if (result.length >= 4 && result[3] is Map<String, dynamic>) {
+          final status = (result[3] as Map<String, dynamic>)['status'];
+          if (status == 'ZERO_RESULTS') hasValidRoute = false;
+        }
+
+        if (hasValidRoute && _state.isNavigating) {
+          final Set<Polyline> polylines = result[0] is Set<Polyline>
+              ? result[0] as Set<Polyline>
+              : <Polyline>{};
+
+          Set<Circle> transitStops = {};
+          List<dynamic> transitDetails = [];
+
+          if (mode == "transit" && result.length >= 3) {
+            final stops = result[1] as List<LatLng>;
+            transitDetails = result[2] as List<dynamic>;
+            for (int i = 0; i < stops.length; i++) {
+              transitStops.add(Circle(
+                circleId: CircleId('transit_stop_$i'),
+                center: stops[i],
+                radius: 8,
+                fillColor: Colors.blue.shade100,
+                strokeColor: Colors.blue.shade700,
+                strokeWidth: 2,
+              ));
+            }
+          }
+
+          if (_state.showAirQuality && result.length >= 4 && result[3] is Map<String, dynamic>) {
+            final isCleanAirRoute = (result[3] as Map<String, dynamic>)['cleanAirRoute'] == true;
+            if (isCleanAirRoute && context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                content: Text('Using route that avoids high pollution areas'),
+                duration: const Duration(seconds: 3),
+                backgroundColor: Colors.green.shade700,
+              ));
+            }
+          }
+
+          updateState((state) => state.copyWith(
+            polylines: polylines,
+            transitStops: transitStops,
+            transitDetails: transitDetails,
+            isLoading: false,
+          ));
+        } else {
+          updateState((state) => state.copyWith(isLoading: false));
+        }
+        return hasValidRoute;
+      }
+    } catch (e) {
+      debugPrint('Error calculating route: $e');
+    }
+
+    updateState((state) => state.copyWith(isLoading: false));
+    return false;
+  }
+  
+  Future<void> setDestination(LatLng destinationLocation) async {
+    final bool isSignificantChange =
+        _state.destination == null ||
+            LocationHelper.calculateDistanceInMeters(_state.destination!, destinationLocation) > 100;
+
+    updateState((state) => state.copyWith(
+      isLoading: isSignificantChange,
+      polylines: {},
+      transitDetails: <dynamic>[],
+      transitStops: <Circle>{},
+      isNavigating: false,
+    ));
+
+    try {
+      final destinationMarker = MapUIHelper.createDestinationMarker(destinationLocation);
+      updateState((state) => state.copyWith(
+        destination: () => destinationLocation,
+        markers: {destinationMarker},
+        isLoading: false,
+      ));
+
+      await updateDistanceAndTime();
+
+      if (isSignificantChange) {
+        await _updateAllModeEstimates();
+      }
+    } catch (e) {
+      debugPrint('Error setting destination: $e');
+      updateState((state) => state.copyWith(isLoading: false));
+    }
+  }
+  
+  Future<void> updateTransportMode(String mode) async {
+    if (mode == _state.transportMode) return;
+
+    if (mode != 'ridesharing') {
+      _previousTransportMode = _state.transportMode;
+    }
+
+    updateState((state) => state.copyWith(
+      transportMode: mode,
+      isLoading: true,
+    ));
+
+    if (mode == 'ridesharing') {
+      if (_state.destination != null) {
+        final didLaunch = await ExternalAppsService.openRideOptionsWithFeedback(
+          context,
+          _state.destination!,
+          origin: _state.currentLocation,
+        );
+        updateState((state) => state.copyWith(
+          transportMode: _previousTransportMode,
+          isLoading: false,
+        ));
+        if (didLaunch == true) clearDestination();
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text("Please set a destination first"),
+          duration: Duration(seconds: 2),
+        ));
+        updateState((state) => state.copyWith(
+          transportMode: _previousTransportMode,
+          isLoading: false,
+        ));
+      }
+    } else {
+      if (_state.destination != null) {
+        if (_modeEstimates.containsKey(mode) &&
+            _modeEstimates[mode]!['distance']?.isNotEmpty == true) {
+          updateState((state) => state.copyWith(
+            distance: () => _modeEstimates[mode]!['distance'],
+            duration: () => _modeEstimates[mode]!['duration'],
+            isLoading: false,
+          ));
+        }
+        bool routeFound = await _calculateRoute();
+        if (mode == 'bicycling' && !routeFound) {
+          _showNoRoutesFoundMessage('bicycling');
+          await _updateAvailableModes();
+          updateState((state) => state.copyWith(
+            transportMode: 'two_wheeler',
+            isLoading: true,
+          ));
+          if (_modeEstimates.containsKey('two_wheeler') &&
+              _modeEstimates['two_wheeler']!['distance']?.isNotEmpty == true) {
+            updateState((state) => state.copyWith(
+              distance: () => _modeEstimates['two_wheeler']!['distance'],
+              duration: () => _modeEstimates['two_wheeler']!['duration'],
+              isLoading: false,
             ));
           }
+          await _calculateRoute();
         }
-        
-        updateState((state) => state.copyWith(
-          polylines: polylines,
-          isLoading: false,
-          transitDetails: transitDetails,
-        ));
-        _updateAllModeEstimates();
       } else {
         updateState((state) => state.copyWith(isLoading: false));
       }
-    }).catchError((error) {
-      updateState((state) => state.copyWith(isLoading: false));
-    });
+    }
   }
 
   void toggleAirQualityOverlay() {
@@ -1529,5 +1633,179 @@ class StateManager {
     if (!_state.showAirQuality) {
       AirQualityService.clearAllCaches();
     }
+  }
+
+  Future<void> _fetchAndStoreLocationName(LatLng location) async {
+    final locationKey = '${location.latitude},${location.longitude}';
+    
+    try {
+      final locationName = await mapsService.getAddressFromLocation(location);
+      if (locationName != null && locationName.isNotEmpty) {
+        _waypointNames[locationKey] = locationName;
+        debugPrint('Location name for $locationKey: $locationName');
+      } else {
+        _waypointNames[locationKey] = 'Waypoint';
+      }
+    } catch (e) {
+      debugPrint('Error getting location name: $e');
+      _waypointNames[locationKey] = 'Waypoint';
+    }
+  }
+  
+  List<String> getWaypointDisplayNames() {
+    final waypointList = _state.waypoints;
+    List<String> displayNames = [];
+    
+    for (int i = 0; i < waypointList.length; i++) {
+      final latLng = waypointList[i];
+      final locationKey = '${latLng.latitude},${latLng.longitude}';
+      
+      if (_waypointNames.containsKey(locationKey)) {
+        displayNames.add(_waypointNames[locationKey]!);
+      } else {
+        displayNames.add('Waypoint ${i + 1}');
+      }
+    }
+    
+    return displayNames;
+  }
+  
+  Future<void> removeWaypoint(int index) async {
+    if (index < 0 || index >= _state.waypoints.length) return;
+    
+    List<LatLng> updatedWaypoints = List.from(_state.waypoints);
+    updatedWaypoints.removeAt(index);
+    
+    LatLng? newDestination = updatedWaypoints.isNotEmpty 
+        ? updatedWaypoints.last 
+        : null;
+    
+    updateState((state) => state.copyWith(
+      waypoints: updatedWaypoints,
+      destination: () => newDestination,
+      isLoading: true,
+    ));
+    
+    Set<Marker> updatedMarkers = {};
+    
+    if (newDestination != null) {
+      updatedMarkers.add(MapUIHelper.createDestinationMarker(newDestination));
+      updatedMarkers.addAll(_createWaypointMarkers(updatedWaypoints));
+    }
+    
+    updateState((state) => state.copyWith(
+      markers: updatedMarkers,
+      isLoading: false,
+    ));
+    
+    if (newDestination != null) {
+      await _calculateRoute();
+      await updateDistanceAndTime();
+    }
+    
+    if (context.mounted) {
+      debugPrint('Removed waypoint at index: $index');
+      debugPrint('Remaining waypoints: ${updatedWaypoints.length}');
+    }
+  }
+  
+  Future<void> reorderWaypoints(int oldIndex, int newIndex) async {
+    if (oldIndex < 0 || oldIndex >= _state.waypoints.length ||
+        newIndex < 0 || newIndex >= _state.waypoints.length) {
+      return;
+    }
+    
+    List<LatLng> updatedWaypoints = List.from(_state.waypoints);
+    final item = updatedWaypoints.removeAt(oldIndex);
+    updatedWaypoints.insert(newIndex, item);
+    
+    final newDestination = updatedWaypoints.last;
+    
+    updateState((state) => state.copyWith(
+      waypoints: updatedWaypoints,
+      destination: () => newDestination,
+      isLoading: true,
+    ));
+    
+    Set<Marker> updatedMarkers = {};
+    updatedMarkers.add(MapUIHelper.createDestinationMarker(newDestination));
+    updatedMarkers.addAll(_createWaypointMarkers(updatedWaypoints));
+    
+    updateState((state) => state.copyWith(
+      markers: updatedMarkers,
+      isLoading: false,
+    ));
+    
+    await _calculateRoute();
+    await updateDistanceAndTime();
+    
+    if (context.mounted) {
+      debugPrint('Reordered waypoint from $oldIndex to $newIndex');
+    }
+  }
+  
+  Set<Marker> _createWaypointMarkers(List<LatLng> waypoints) {
+    Set<Marker> markers = {};
+    
+    for (int i = 0; i < waypoints.length - 1; i++) {
+      final waypoint = waypoints[i];
+      markers.add(
+        Marker(
+          markerId: MarkerId('waypoint_$i'),
+          position: waypoint,
+          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
+          infoWindow: InfoWindow(
+            title: 'Waypoint ${i + 1}',
+          ),
+        ),
+      );
+    }
+    
+    return markers;
+  }
+
+  void _updateRoute({bool preserveTransitDetails = false}) {
+    if (_state.destination == null) return;
+    final savedTransitDetails = preserveTransitDetails && _state.transitDetails.isNotEmpty
+        ? List.from(_state.transitDetails)
+        : null;
+    updateState((state) => state.copyWith(isLoading: true));
+    
+    final origin = _state.currentLocation;
+    final destination = _state.destination!;
+    mapsService.getRoutePolylines(
+      origin: origin,
+      destination: destination,
+      mode: _state.transportMode,
+      includeTransitDetails: _state.transportMode == 'transit',
+      avoidAirPollution: _state.showAirQuality,
+    ).then((result) {
+      if (result != null && result.isNotEmpty && result[0] is Set<Polyline>) {
+        final polylines = result[0] as Set<Polyline>;
+        final transitDetails = savedTransitDetails ?? (result.length > 2 ? result[2] as List<dynamic> : []);
+        
+        if (_state.showAirQuality && result.length >= 4 && result[3] is Map<String, dynamic>) {
+          final isCleanAirRoute = (result[3] as Map<String, dynamic>)['cleanAirRoute'] == true;
+          if (isCleanAirRoute && context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text('Using route that avoids high pollution areas'),
+              duration: const Duration(seconds: 3),
+              backgroundColor: Colors.green.shade700,
+            ));
+          }
+        }
+        
+        updateState((state) => state.copyWith(
+          polylines: polylines,
+          isLoading: false,
+          transitDetails: transitDetails,
+        ));
+        _updateAllModeEstimates();
+      } else {
+        updateState((state) => state.copyWith(isLoading: false));
+      }
+    }).catchError((error) {
+      updateState((state) => state.copyWith(isLoading: false));
+    });
   }
 }

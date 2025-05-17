@@ -22,7 +22,7 @@ class MapUIHelper {
       ),
     };
   }
-  
+
   static Marker createDestinationMarker(LatLng location) {
     return Marker(
       markerId: const MarkerId('destination'),
@@ -30,20 +30,20 @@ class MapUIHelper {
       icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
     );
   }
-  
+
   static Set<Marker> getFilteredMarkers(Set<Marker> markers) {
     final filteredMarkers = markers.where((marker) => marker.markerId.value != 'user_direction').toSet();
-    
+
     return enhanceMarkerInfoWindows(filteredMarkers);
   }
-  
+
   static Set<Marker> enhanceMarkerInfoWindows(Set<Marker> markers) {
     return markers.map((marker) {
       if (marker.markerId.value == 'destination' ||
           marker.markerId.value == 'user_location') {
         return marker;
       }
-      
+
       return marker.copyWith(
         consumeTapEventsParam: false,
         visibleParam: true,
@@ -53,10 +53,10 @@ class MapUIHelper {
       );
     }).toSet();
   }
-  
+
   static Widget buildLoadingIndicator(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Center(
       child: CircularProgressIndicator(
         color: theme.colorScheme.primary,
@@ -141,6 +141,7 @@ class MapUIHelper {
       right: 16,
       bottom: bottomOffset,
       child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
           color: isActive ? Colors.green.shade500 : Colors.white,
           borderRadius: BorderRadius.circular(8),
@@ -185,4 +186,4 @@ class MapUIHelper {
       ),
     );
   }
-} 
+}
