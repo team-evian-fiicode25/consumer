@@ -1,9 +1,7 @@
 import 'dart:async';
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:go_router/go_router.dart';
-import '../../core/services/incidents_service.dart';
 import '../../core/services/maps_service.dart';
 import '../../core/services/air_quality_service.dart';
 import 'components/incident_report_bottom_sheet.dart';
@@ -29,6 +27,8 @@ class _HomePageState extends State<HomePage> {
 
   late StateManager _stateManager;
   late MapState _state;
+  
+  double _currentZoomLevel = 12.0;
 
   @override
   void initState() {
@@ -45,6 +45,8 @@ class _HomePageState extends State<HomePage> {
       transitStops: {},
       userLocationMarker: {},
       transitDetails: [],
+      tileOverlays: {},
+      showAirQuality: false,
     );
 
     _stateManager = StateManager(
@@ -91,12 +93,13 @@ class _HomePageState extends State<HomePage> {
     if (!mounted) return;
 
     try {
-    final GoogleMapController controller = await _mapController.future;
-    controller.animateCamera(
-      CameraUpdate.newCameraPosition(
-        CameraPosition(target: location, zoom: zoom),
-      ),
-    );
+      final GoogleMapController controller = await _mapController.future;
+      controller.animateCamera(
+        CameraUpdate.newCameraPosition(
+          CameraPosition(target: location, zoom: zoom),
+        ),
+      );
+      _currentZoomLevel = zoom;
     } catch (e) {
       debugPrint('Error animating camera: $e');
     }
@@ -283,12 +286,14 @@ class _HomePageState extends State<HomePage> {
           initialCameraPosition:
           CameraPosition(target: _state.currentLocation, zoom: 14.4746),
           onMapCreated: _onMapCreated,
+          onCameraMove: _onCameraMove,
           myLocationEnabled: false,
           myLocationButtonEnabled: false,
           zoomControlsEnabled: false,
           markers: MapUIHelper.getFilteredMarkers(_state.markers),
           circles: _state.userLocationMarker.union(_state.transitStops),
           polylines: _state.polylines,
+          tileOverlays: _state.tileOverlays,
           padding: EdgeInsets.only(bottom: minBottomPadding),
         ),
       ),
@@ -296,26 +301,123 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildFloatingButton(ThemeData theme, double bottomSheetHeight) {
-    if (!_state.isFollowing) {
-      return MapUIHelper.buildMyLocationButton(
-        context,
-        bottomOffset: bottomSheetHeight + 30,
-        onPressed: () async {
-          _stateManager.updateState((state) =>
-              state.copyWith(
-                isFollowing: true,
+    return Stack(
+      children: [
+        MapUIHelper.buildAirQualityButton(
+          context,
+          bottomOffset: bottomSheetHeight + 90,
+          isActive: _state.showAirQuality,
+          onPressed: () async {
+            if (_state.showAirQuality) {
+              _stateManager.toggleAirQualityOverlay();
+              return;
+            }
+            
+            final scaffoldMessenger = ScaffoldMessenger.of(context);
+            scaffoldMessenger.hideCurrentSnackBar();
+            
+            final loadingSnackBar = SnackBar(
+              content: Row(
+                children: [
+                  SizedBox(
+                    height: 20, 
+                    width: 20, 
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    )
+                  ),
+                  SizedBox(width: 12),
+                  Text("Loading air quality data...")
+                ],
+              ),
+              duration: Duration(seconds: 15),
+              backgroundColor: Colors.green.shade700,
+            );
+            
+            final snackBarController = scaffoldMessenger.showSnackBar(loadingSnackBar);
+            
+            try {
+              _stateManager.toggleAirQualityOverlay();
+              
+              await AirQualityService.preloadTilesForLocation(
+                _state.currentLocation, 
+                _stateManager.currentAirQualityMapType
+              );
+              
+              await Future.delayed(Duration(milliseconds: 200));
+              
+              final controller = await _mapController.future;
+              final currentZoom = await controller.getZoomLevel();
+              
+              await controller.moveCamera(
+                CameraUpdate.newCameraPosition(
+                  CameraPosition(
+                    target: LatLng(
+                      _state.currentLocation.latitude + 0.0001,
+                      _state.currentLocation.longitude + 0.0001
+                    ),
+                    zoom: currentZoom
+                  )
+                )
+              );
+              
+              await Future.delayed(Duration(milliseconds: 100));
+              
+              await controller.moveCamera(
+                CameraUpdate.newCameraPosition(
+                  CameraPosition(
+                    target: _state.currentLocation,
+                    zoom: currentZoom
+                  )
+                )
+              );
+              
+              snackBarController.close();
+              
+              scaffoldMessenger.showSnackBar(SnackBar(
+                content: Text("Air quality data loaded"),
+                duration: Duration(seconds: 2),
+                backgroundColor: Colors.green,
               ));
-          await _animateCameraTo(_state.currentLocation, zoom: 18);
-        },
-      );
-    }
-
-    return MapUIHelper.buildReportIncidentButton(
-      context,
-      bottomOffset: bottomSheetHeight + 30,
-      onPressed: () async {
-        await showIncidentReportBottomSheet(context, '', _state.currentLocation);
-      },
+            } catch (e) {
+              snackBarController.close();
+              
+              scaffoldMessenger.showSnackBar(SnackBar(
+                content: Text("Could not load air quality data"),
+                duration: Duration(seconds: 3),
+                backgroundColor: Colors.red,
+              ));
+            }
+          },
+          onLongPress: () {
+            if (_state.showAirQuality) {
+              _stateManager.cycleAirQualityMapType();
+            }
+          },
+        ),
+        if (!_state.isFollowing)
+          MapUIHelper.buildMyLocationButton(
+            context,
+            bottomOffset: bottomSheetHeight + 30,
+            onPressed: () async {
+              _stateManager.updateState((state) =>
+                  state.copyWith(
+                    isFollowing: true,
+                  ));
+              
+              await _animateCameraTo(_state.currentLocation, zoom: 17.5);
+            },
+          )
+        else
+          MapUIHelper.buildReportIncidentButton(
+            context,
+            bottomOffset: bottomSheetHeight + 30,
+            onPressed: () async {
+              await showIncidentReportBottomSheet(context, '', _state.currentLocation);
+            },
+          ),
+      ],
     );
   }
 
@@ -569,5 +671,25 @@ class _HomePageState extends State<HomePage> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+  }
+
+  void _onCameraMove(CameraPosition position) {
+    final previousZoom = _currentZoomLevel;
+    _currentZoomLevel = position.zoom;
+    
+    if (_state.showAirQuality) {
+      if ((previousZoom - _currentZoomLevel).abs() > 3.0) {
+        _refreshAirQualityTiles();
+      }
+    }
+  }
+  
+  void _refreshAirQualityTiles() {
+    if (!_state.showAirQuality) return;
+
+    AirQualityService.preloadTilesForLocation(
+        _state.currentLocation,
+        _stateManager.currentAirQualityMapType
+    );
   }
 }

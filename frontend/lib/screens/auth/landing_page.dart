@@ -77,7 +77,6 @@ class _LandingPageState extends State<LandingPage> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final mediaQuery = MediaQuery.of(context);
-    final safeAreaBottom = mediaQuery.padding.bottom;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,

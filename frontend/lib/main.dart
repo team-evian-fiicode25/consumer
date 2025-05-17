@@ -22,13 +22,11 @@ class MyApp extends StatelessWidget {
             BlocProvider(create: (context) => AuthBloc(AuthService())),
             BlocProvider(create: (context) {
               final themeBloc = ThemeBloc();
-              // Load saved theme on app start
               themeBloc.add(ThemeLoaded());
               return themeBloc;
             }),
             BlocProvider(create: (context) {
               final settingsBloc = SettingsBloc();
-              // Load all saved settings on app start
               settingsBloc.add(SettingsLoaded());
               return settingsBloc;
             }),

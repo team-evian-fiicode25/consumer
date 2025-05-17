@@ -29,6 +29,8 @@ class MapState {
   final Set<Circle> userLocationMarker;
   final List<dynamic> transitDetails;
   final dynamic currentTransitStep;
+  final Set<TileOverlay> tileOverlays;
+  final bool showAirQuality;
 
   const MapState({
     required this.currentLocation,
@@ -45,6 +47,8 @@ class MapState {
     required this.userLocationMarker,
     required this.transitDetails,
     this.currentTransitStep,
+    this.tileOverlays = const {},
+    this.showAirQuality = false,
   });
 
   MapState copyWith({
@@ -62,6 +66,8 @@ class MapState {
     Set<Circle>? userLocationMarker,
     List<dynamic>? transitDetails,
     dynamic currentTransitStep,
+    Set<TileOverlay>? tileOverlays,
+    bool? showAirQuality,
   }) {
     return MapState(
       currentLocation: currentLocation ?? this.currentLocation,
@@ -78,6 +84,8 @@ class MapState {
       userLocationMarker: userLocationMarker ?? this.userLocationMarker,
       transitDetails: transitDetails ?? this.transitDetails,
       currentTransitStep: currentTransitStep ?? this.currentTransitStep,
+      tileOverlays: tileOverlays ?? this.tileOverlays,
+      showAirQuality: showAirQuality ?? this.showAirQuality,
     );
   }
 }
@@ -126,7 +134,6 @@ class StateManager {
     'ridesharing': true,
   };
 
-  final List<String> _incidentTypes = ["Accident", "Roadblock", "BadWeather", "Hazard", "Traffic", "Other"];
   final Map<String, IconData> _incidentIcons = {
     "Accident": Icons.warning,
     "Roadblock": Icons.block,
@@ -136,9 +143,18 @@ class StateManager {
     "Other": Icons.help_outline,
   };
 
+  final Set<TileOverlay> _tileOverlays = {};
+  String _currentAirQualityMapType = AirQualityService.defaultMapType;
+  List<String> _availableMapTypes = AirQualityService.mapTypes.keys.toList();
+  
+  String _currentAirQualityCategory = "";
+  int? _currentAirQualityIndex = null;
 
   Map<String, bool> get availableModes => _availableModes;
   Map<String, Map<String, String>> get modeEstimates => _modeEstimates;
+  String get currentAirQualityMapType => _currentAirQualityMapType;
+  String get currentAirQualityCategory => _currentAirQualityCategory;
+  int? get currentAirQualityIndex => _currentAirQualityIndex;
 
   final List<LatLng> _previousLocations = [];
   final List<DateTime> _previousLocationTimes = [];
@@ -159,10 +175,14 @@ class StateManager {
       final initialLocation = await fetchInitialLocation();
       final userMarkers = MapUIHelper.createUserLocationMarkers(initialLocation);
 
+      _tileOverlays.clear();
+      
       updateState((state) => state.copyWith(
         currentLocation: initialLocation,
         isLoading: false,
         userLocationMarker: userMarkers,
+        tileOverlays: _tileOverlays,
+        showAirQuality: false,
       ));
 
       await _locationSubscription?.cancel();
@@ -597,12 +617,15 @@ class StateManager {
     }
   }
 
+  @override
   void dispose() {
     _navigationTimer?.cancel();
     _distanceTimer?.cancel();
     _locationSubscription?.cancel();
     _followUserCallback = null;
     _animateCameraToCallback = null;
+    
+    AirQualityService.clearAllCaches();
   }
 
   void stopNavigation() {
@@ -1147,5 +1170,198 @@ class StateManager {
     }).catchError((error) {
       updateState((state) => state.copyWith(isLoading: false));
     });
+  }
+
+  void toggleAirQualityOverlay() {
+    final showAirQuality = !_state.showAirQuality;
+    
+    _tileOverlays.clear();
+    
+    if (showAirQuality) {
+      AirQualityService.preloadTilesForLocation(
+        _state.currentLocation, 
+        _currentAirQualityMapType
+      );
+      
+      final airQualityOverlay = AirQualityService.getAirQualityOverlay(
+        'air_quality_overlay',
+        mapType: _currentAirQualityMapType,
+        transparency: 0.35,
+      );
+      _tileOverlays.add(airQualityOverlay);
+    } else {
+    }
+
+    updateState((state) => state.copyWith(
+      tileOverlays: _tileOverlays,
+      showAirQuality: showAirQuality,
+    ));
+  }
+  
+  void cycleAirQualityMapType() {
+    _cycleToNextMapType();
+    
+    if (_state.showAirQuality) {
+      _tileOverlays.clear();
+      
+      AirQualityService.preloadTilesForLocation(
+        _state.currentLocation, 
+        _currentAirQualityMapType
+      );
+      
+      final airQualityOverlay = AirQualityService.getAirQualityOverlay(
+        'air_quality_overlay',
+        mapType: _currentAirQualityMapType,
+      );
+      _tileOverlays.add(airQualityOverlay);
+      
+      updateState((state) => state.copyWith(
+        tileOverlays: _tileOverlays,
+      ));
+      
+      _showMapTypeChangedMessage();
+    }
+  }
+  
+  void _cycleToNextMapType() {
+    final currentIndex = _availableMapTypes.indexOf(_currentAirQualityMapType);
+    final nextIndex = (currentIndex + 1) % _availableMapTypes.length;
+    _currentAirQualityMapType = _availableMapTypes[nextIndex];
+    
+    if (_state.showAirQuality) {
+      _tileOverlays.clear();
+      final airQualityOverlay = AirQualityService.getAirQualityOverlay(
+        'air_quality_overlay',
+        mapType: _currentAirQualityMapType,
+      );
+      _tileOverlays.add(airQualityOverlay);
+      
+      updateState((state) => state.copyWith(
+        tileOverlays: _tileOverlays,
+      ));
+      
+      _showMapTypeChangedMessage();
+      
+      _fetchAirQualityConditions();
+    }
+  }
+  
+  void _showMapTypeChangedMessage() {
+    if (!context.mounted) return;
+    
+    final mapTypeName = AirQualityService.mapTypes[_currentAirQualityMapType] ?? _currentAirQualityMapType;
+    
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text('Air Quality Map: $mapTypeName'),
+      duration: const Duration(seconds: 2),
+      behavior: SnackBarBehavior.floating,
+    ));
+  }
+  
+  Future<void> _fetchAirQualityConditions() async {
+    if (!_state.showAirQuality) return;
+    
+    try {
+      final conditions = await AirQualityService.getCurrentConditions(
+        location: _state.currentLocation,
+        extraComputations: ["HEALTH_RECOMMENDATIONS"],
+        universalAqi: true,
+      );
+      
+      if (conditions != null && context.mounted) {
+        String aqiMessage = "";
+        int? aqiValue;
+        String category = "";
+        
+        if (conditions.containsKey('indexes') && conditions['indexes'] is List) {
+          final indexes = conditions['indexes'] as List;
+          if (indexes.isNotEmpty && indexes[0] is Map) {
+            final index = indexes[0] as Map;
+            if (index.containsKey('aqi')) {
+              aqiValue = index['aqi'] as int?;
+            }
+            
+            if (index.containsKey('category')) {
+              category = index['category'] as String? ?? "";
+            }
+          }
+        }
+        
+        String recommendation = "";
+        if (conditions.containsKey('healthRecommendations') && 
+            conditions['healthRecommendations'] is Map) {
+          final healthRecs = conditions['healthRecommendations'] as Map;
+          if (healthRecs.containsKey('generalPopulation')) {
+            final fullRec = healthRecs['generalPopulation'] as String? ?? "";
+            recommendation = fullRec.split('.').first + '.';
+          }
+        }
+        
+        _currentAirQualityCategory = category;
+        _currentAirQualityIndex = aqiValue;
+        
+        Color backgroundColor = Colors.blue;
+        if (aqiValue != null) {
+          if (aqiValue <= 50) {
+            backgroundColor = Colors.green;
+          } else if (aqiValue <= 100) {
+            backgroundColor = Colors.yellow.shade800;
+          } else if (aqiValue <= 150) {
+            backgroundColor = Colors.orange;
+          } else if (aqiValue <= 200) {
+            backgroundColor = Colors.red;
+          } else if (aqiValue <= 300) {
+            backgroundColor = Colors.purple;
+          } else {
+            backgroundColor = Colors.brown;
+          }
+        }
+        
+        if (_currentAirQualityIndex != null && _currentAirQualityCategory.isNotEmpty) {
+          updateState((state) => state.copyWith(showAirQuality: state.showAirQuality));
+        }
+        
+        aqiMessage = "AQI ${aqiValue ?? '?'} - $category";
+        
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                aqiMessage,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              if (recommendation.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(
+                    recommendation,
+                    style: const TextStyle(color: Colors.white, fontSize: 12),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+            ],
+          ),
+          backgroundColor: backgroundColor,
+          duration: const Duration(seconds: 4),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          margin: const EdgeInsets.all(8),
+        ));
+      }
+    } catch (e) {
+      debugPrint('Error fetching air quality: $e');
+    }
+  }
+
+  void clearAirQualityCaches() {
+    if (!_state.showAirQuality) {
+      AirQualityService.clearAllCaches();
+    }
   }
 }

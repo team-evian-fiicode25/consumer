@@ -1,9 +1,5 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
-
-import '../../../core/services/incidents_service.dart';
 
 class MapUIHelper {
   static Set<Circle> createUserLocationMarkers(LatLng location) {
@@ -110,6 +106,62 @@ class MapUIHelper {
           ),
           onPressed: onPressed,
           tooltip: 'Report Incident',
+        ),
+      ),
+    );
+  }
+
+  static Widget buildAirQualityButton(
+      BuildContext context, {
+        required double bottomOffset,
+        required VoidCallback onPressed,
+        required bool isActive,
+        VoidCallback? onLongPress,
+      }) {
+    return Positioned(
+      right: 16,
+      bottom: bottomOffset,
+      child: Container(
+        decoration: BoxDecoration(
+          color: isActive ? Colors.green.shade500 : Colors.white,
+          borderRadius: BorderRadius.circular(8),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.2),
+              blurRadius: 4,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onPressed,
+            onLongPress: onLongPress,
+            borderRadius: BorderRadius.circular(8),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.cloud_outlined,
+                    color: isActive ? Colors.white : Colors.green.shade700,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Air',
+                    style: TextStyle(
+                      color: isActive ? Colors.white : Colors.green.shade700,
+                      fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ),
       ),
     );
