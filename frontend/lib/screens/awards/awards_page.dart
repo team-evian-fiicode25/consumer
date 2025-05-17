@@ -284,9 +284,8 @@ class AwardsPage extends StatelessWidget {
         'description': 'Reported 10 noise pollution incidents',
         'icon': Icons.surround_sound,
         'color': Colors.red,
-        'earned': false,
+        'earned': true,
       },
-      
       {
         'name': 'Eco Warrior',
         'description': 'Used the app for 30 days in a row',
