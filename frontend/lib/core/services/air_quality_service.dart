@@ -45,7 +45,7 @@ class AirQualityService {
     _httpClient.close();
   }
 
-  static TileOverlay getAirQualityOverlay(String overlayId, {String? mapType, double transparency = 0.4}) {
+  static TileOverlay getAirQualityOverlay(String overlayId, {String? mapType, double transparency = 0.1}) {
     final mapTypeToUse = mapType ?? defaultMapType;
     
     if (!_tileProviders.containsKey(mapTypeToUse)) {
