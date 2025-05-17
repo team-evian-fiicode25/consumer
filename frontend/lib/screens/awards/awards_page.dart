@@ -280,10 +280,39 @@ class AwardsPage extends StatelessWidget {
         'earned': true,
       },
       {
-        'name': 'Bike Enthusiast',
-        'description': 'Completed 10 rides on a bike',
-        'icon': Icons.pedal_bike,
+        'name': 'Noise Pollution Reporter',
+        'description': 'Reported 10 noise pollution incidents',
+        'icon': Icons.surround_sound,
+        'color': Colors.red,
+        'earned': false,
+      },
+      
+      {
+        'name': 'Eco Warrior',
+        'description': 'Used the app for 30 days in a row',
+        'icon': Icons.eco,
+        'color': Colors.greenAccent,
+        'earned': true,
+      },
+      {
+        'name': 'Chatty User',
+        'description': 'Started 25 chats with the virtual assistant',
+        'icon': Icons.chat,
         'color': Colors.orange,
+        'earned': true,
+      },
+      {
+        'name': 'Pollution Fighter',
+        'description': 'Took 10 alternative rides to prevent pollution',
+        'icon': Icons.air_rounded,
+        'color': Colors.orange,
+        'earned': false,
+      },
+      {
+        'name': 'Speed Demon',
+        'description': 'Completed a ride in under 5 minutes',
+        'icon': Icons.speed,
+        'color': Colors.purple,
         'earned': false,
       },
       {
