@@ -5,6 +5,7 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/services/incidents_service.dart';
 import '../../core/services/maps_service.dart';
+import '../../core/services/air_quality_service.dart';
 import 'components/incident_report_bottom_sheet.dart';
 import 'components/transit_details_card.dart';
 import 'components/transport_mode_options.dart';
@@ -24,6 +25,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   final Completer<GoogleMapController> _mapController = Completer();
   final MapsService _mapsService = MapsService();
+  final AirQualityService _airQualityService = AirQualityService();
 
   late StateManager _stateManager;
   late MapState _state;
@@ -49,6 +51,7 @@ class _HomePageState extends State<HomePage> {
       initialState: _state,
       onStateUpdate: _onStateUpdate,
       mapsService: _mapsService,
+      airQualityService: _airQualityService,
       context: context,
     );
 

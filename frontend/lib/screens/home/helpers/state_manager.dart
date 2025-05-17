@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
+import '../../../core/services/air_quality_service.dart';
 import '../../../core/services/geo_location.dart';
 import '../../../core/services/incidents_service.dart';
 import '../../../core/services/maps_service.dart';
@@ -84,6 +85,7 @@ class MapState {
 class StateManager {
   final Function(MapState) onStateUpdate;
   final MapsService mapsService;
+  final AirQualityService airQualityService;
   MapState _state;
   final BuildContext context;
 
@@ -146,6 +148,7 @@ class StateManager {
     required MapState initialState,
     required this.onStateUpdate,
     required this.mapsService,
+    required this.airQualityService,
     required this.context,
   }) : _state = initialState;
 
