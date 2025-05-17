@@ -32,7 +32,26 @@ class MapUIHelper {
   }
   
   static Set<Marker> getFilteredMarkers(Set<Marker> markers) {
-    return markers.where((marker) => marker.markerId.value != 'user_direction').toSet();
+    final filteredMarkers = markers.where((marker) => marker.markerId.value != 'user_direction').toSet();
+    
+    return enhanceMarkerInfoWindows(filteredMarkers);
+  }
+  
+  static Set<Marker> enhanceMarkerInfoWindows(Set<Marker> markers) {
+    return markers.map((marker) {
+      if (marker.markerId.value == 'destination' ||
+          marker.markerId.value == 'user_location') {
+        return marker;
+      }
+      
+      return marker.copyWith(
+        consumeTapEventsParam: false,
+        visibleParam: true,
+        zIndexParam: 2,
+        flatParam: false,
+        draggableParam: false,
+      );
+    }).toSet();
   }
   
   static Widget buildLoadingIndicator(BuildContext context) {

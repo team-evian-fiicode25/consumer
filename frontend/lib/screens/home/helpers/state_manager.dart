@@ -140,6 +140,7 @@ class StateManager {
     "BadWeather": Icons.cloud,
     "Hazard": Icons.report,
     "Traffic": Icons.traffic,
+    "Noise": Icons.surround_sound,
     "Other": Icons.help_outline,
   };
 
@@ -268,28 +269,72 @@ class StateManager {
       for (var inc in incidents) {
         final locRaw = inc["Location"] as String;
         final incidentType = inc["IncidentType"]?.toString() ?? "Other";
+        final description = inc["description"]?.toString() ?? "";
+        final incidentID = inc["incidentID"]?.toString() ?? DateTime.now().millisecondsSinceEpoch.toString();
         final parsedLoc = parsePointWKT(locRaw);
 
-        final iconData = _incidentIcons[incidentType] ?? Icons.help_outline;
-        final iconColor = Colors.red.shade800;
+        String title = incidentType;
+        String snippet = description;
+        BitmapDescriptor? icon;
+        
+        if (incidentType == "Noise") {
+          icon = await getNoiseIncidentIcon(96);
+          
+          if (description.contains("Measured noise:")) {
+            final parts = description.split("\n");
+            if (parts.length >= 3) {
+              final interpretationLine = parts.firstWhere(
+                (line) => line.startsWith("Interpretation:"), 
+                orElse: () => ""
+              );
+              
+              final noiseLine = parts.firstWhere(
+                (line) => line.startsWith("Measured noise:"), 
+                orElse: () => ""
+              );
+              
+              if (interpretationLine.isNotEmpty && noiseLine.isNotEmpty) {
+                final interpretation = interpretationLine.replaceFirst("Interpretation:", "").trim();
+                final noiseValue = noiseLine.replaceFirst("Measured noise:", "").trim();
+                
+                title = "🔊 Noise Incident: ${noiseValue.split(' ')[0]} dB";
+                
+                snippet = interpretation;
+              }
+            }
+          }
+        } else {
+          final iconData = _incidentIcons[incidentType] ?? Icons.help_outline;
+          final iconColor = Colors.red.shade800;
+          icon = await getMarkerIconFromIconData(iconData, iconColor, size: 96);
+        }
 
-        final icon = await getMarkerIconFromIconData(iconData, iconColor, size: 96);
+        if (snippet.length > 80) {
+          snippet = snippet.substring(0, 77) + "...";
+        }
 
         incidentMarkers.add(
           Marker(
-            markerId: MarkerId(inc["incidentID"].toString()),
+            markerId: MarkerId(incidentID),
             position: parsedLoc,
-            infoWindow: InfoWindow(
-              title: incidentType,
-              snippet: inc["description"]?.toString() ?? "",
-            ),
             icon: icon,
+            infoWindow: InfoWindow(
+              title: title,
+              snippet: snippet,
+            ),
+            visible: true,
+            zIndex: 2,
+            consumeTapEvents: false,
+            draggable: false,
+            flat: false,
           ),
         );
       }
 
+      final destinationMarker = _state.markers.where((m) => m.markerId.value == 'destination').toSet();
+      
       updateState((state) => state.copyWith(
-        markers: state.markers.union(incidentMarkers),
+        markers: destinationMarker.union(incidentMarkers),
       ));
     } catch (e) {
       print("❌ Error fetching incidents: $e");
@@ -310,7 +355,7 @@ class StateManager {
     final textSpan = TextSpan(
       text: String.fromCharCode(iconData.codePoint),
       style: TextStyle(
-        fontSize: size,
+        fontSize: size * 0.6,
         fontFamily: iconData.fontFamily,
         package: iconData.fontPackage,
         color: color,
@@ -319,6 +364,27 @@ class StateManager {
 
     textPainter.text = textSpan;
     textPainter.layout();
+
+    final paint = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.fill;
+    
+    canvas.drawCircle(
+      Offset(size / 2, size / 2),
+      size / 2.2,
+      paint,
+    );
+    
+    final borderPaint = Paint()
+      ..color = color.withOpacity(0.8)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = size / 12;
+    
+    canvas.drawCircle(
+      Offset(size / 2, size / 2),
+      size / 2.2,
+      borderPaint,
+    );
 
     final offset = Offset(
       (size - textPainter.width) / 2,
@@ -333,6 +399,87 @@ class StateManager {
     final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
     final bytes = byteData!.buffer.asUint8List();
 
+    return BitmapDescriptor.fromBytes(bytes);
+  }
+  
+  Future<BitmapDescriptor> getNoiseIncidentIcon(double size) async {
+    final pictureRecorder = ui.PictureRecorder();
+    final canvas = Canvas(pictureRecorder);
+    final soundWavesPaint = Paint()
+      ..color = Colors.purple.shade700
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = size / 20
+      ..strokeCap = StrokeCap.round;
+    
+    final bgPaint = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.fill;
+    
+    canvas.drawCircle(
+      Offset(size / 2, size / 2),
+      size / 2.2,
+      bgPaint,
+    );
+    
+    final borderPaint = Paint()
+      ..color = Colors.purple.shade700
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = size / 12;
+    
+    canvas.drawCircle(
+      Offset(size / 2, size / 2),
+      size / 2.2,
+      borderPaint,
+    );
+    
+    final textPainter = TextPainter(
+      textDirection: TextDirection.ltr,
+    );
+    
+    final textSpan = TextSpan(
+      text: String.fromCharCode(Icons.mic.codePoint),
+      style: TextStyle(
+        fontSize: size * 0.5,
+        fontFamily: Icons.mic.fontFamily,
+        color: Colors.purple.shade700,
+      ),
+    );
+    
+    textPainter.text = textSpan;
+    textPainter.layout();
+    
+    final offset = Offset(
+      (size - textPainter.width) / 2,
+      (size - textPainter.height) / 2,
+    );
+    
+    textPainter.paint(canvas, offset);
+    
+    final center = Offset(size / 2, size / 2);
+    
+    canvas.drawArc(
+      Rect.fromCenter(center: center, width: size * 0.6, height: size * 0.6),
+      -0.5,
+      1.0,
+      false,
+      soundWavesPaint,
+    );
+    
+    canvas.drawArc(
+      Rect.fromCenter(center: center, width: size * 0.8, height: size * 0.8),
+      -0.5,
+      1.0,
+      false,
+      soundWavesPaint,
+    );
+    
+    final image = await pictureRecorder
+        .endRecording()
+        .toImage(size.toInt(), size.toInt());
+    
+    final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+    final bytes = byteData!.buffer.asUint8List();
+    
     return BitmapDescriptor.fromBytes(bytes);
   }
 

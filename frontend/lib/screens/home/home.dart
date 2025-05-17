@@ -295,6 +295,8 @@ class _HomePageState extends State<HomePage> {
           polylines: _state.polylines,
           tileOverlays: _state.tileOverlays,
           padding: EdgeInsets.only(bottom: minBottomPadding),
+          compassEnabled: true,
+          buildingsEnabled: true,
         ),
       ),
     );
