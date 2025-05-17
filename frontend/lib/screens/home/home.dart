@@ -229,6 +229,12 @@ class _HomePageState extends State<HomePage> {
             top: 50,
             child: _buildMenuButton(theme),
           ),
+          
+          Positioned(
+            right: 16,
+            top: 50,
+            child: _buildChatbotButton(theme),
+          ),
 
           _buildFloatingButton(theme, bottomSheetHeight),
 
@@ -262,6 +268,36 @@ class _HomePageState extends State<HomePage> {
           ),
           onPressed: () {
             context.goNamed('settings');
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildChatbotButton(ThemeData theme) {
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(51),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        shape: const CircleBorder(),
+        clipBehavior: Clip.antiAlias,
+        child: IconButton(
+          icon: Icon(
+            Icons.chat_bubble_outline,
+            color: theme.colorScheme.primary,
+          ),
+          onPressed: () {
+            context.goNamed('chatbot');
           },
         ),
       ),

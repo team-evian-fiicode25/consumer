@@ -13,6 +13,7 @@ import '../screens/settings/settings_page.dart';
 import '../screens/profile/profile_page.dart';
 import '../screens/awards/awards_page.dart';
 import '../screens/settings/settings_options_page.dart';
+import '../screens/chatbot/chatbot_screen.dart';
 
 final GoRouter router = GoRouter(
   redirect: (context, state) {
@@ -88,6 +89,11 @@ final GoRouter router = GoRouter(
       path: '/settings-options',
       name: 'settings-options',
       builder: (context, state) => const SettingsOptionsPage(),
+    ),
+    GoRoute(
+      path: '/chatbot',
+      name: 'chatbot',
+      builder: (context, state) => const ChatbotScreen(),
     ),
   ],
 );
