@@ -524,6 +524,7 @@ class MapsService {
     required LatLng destination,
     String mode = "driving",
     bool includeTransitDetails = false,
+    bool avoidAirPollution = false,
   }) async {
     if (!await _isInternetAvailable()) {
       return null;
@@ -531,21 +532,24 @@ class MapsService {
 
     final originRounded = _roundCoordinates(origin);
     final destinationRounded = _roundCoordinates(destination);
-    final cacheKey = 'route_${originRounded.latitude},${originRounded.longitude}_${destinationRounded.latitude},${destinationRounded.longitude}_$mode';
+    final cacheKeySuffix = avoidAirPollution ? '_clean_air' : '';
+    final cacheKey = 'route_${originRounded.latitude},${originRounded.longitude}_${destinationRounded.latitude},${destinationRounded.longitude}_${mode}${cacheKeySuffix}';
 
     return mode == "transit"
-        ? await _getTransitRoutePolylines(origin, destination, cacheKey)
-        : await _getStandardRoutePolylines(origin, destination, mode, cacheKey);
+        ? await _getTransitRoutePolylines(origin, destination, cacheKey, avoidAirPollution)
+        : await _getStandardRoutePolylines(origin, destination, mode, cacheKey, avoidAirPollution);
   }
 
   Future<List<dynamic>?> _getTransitRoutePolylines(
-      LatLng origin, LatLng destination, String cacheKey) async {
+      LatLng origin, LatLng destination, String cacheKey, bool avoidAirPollution) async {
     _cache.remove(cacheKey);
 
     final url = 'https://maps.googleapis.com/maps/api/directions/json?'
         'origin=${origin.latitude},${origin.longitude}&'
         'destination=${destination.latitude},${destination.longitude}&'
-        'mode=transit&alternatives=true&key=$apiKey';
+        'mode=transit&alternatives=true'
+        '${avoidAirPollution ? "&avoid=smog_zones" : ""}'
+        '&key=$apiKey';
 
     final response = await _safeHttpGet(url, errorContext: 'getTransitRoutePolylines');
     if (response == null) return null;
@@ -557,7 +561,8 @@ class MapsService {
     }
 
     try {
-      final route = data['routes'][0];
+      final route = _selectBestRoute(data['routes'], avoidAirPollution);
+      
       final points = _decodePoly(route['overview_polyline']['points']);
       final polyline = Polyline(
         polylineId: const PolylineId('route'),
@@ -595,6 +600,7 @@ class MapsService {
           'status': 'OK',
           'totalDuration': leg['duration']['text'],
           'distance': leg['distance']['text'],
+          'cleanAirRoute': avoidAirPollution
         }
       ];
 
@@ -603,6 +609,90 @@ class MapsService {
       debugPrint('Error processing transit route polyline: $e');
       return null;
     }
+  }
+
+  Future<List<dynamic>?> _getStandardRoutePolylines(
+      LatLng origin, LatLng destination, String mode, String cacheKey, bool avoidAirPollution) async {
+    final cachedResult = _getFromCache(cacheKey);
+    if (cachedResult != null) {
+      try {
+        return cachedResult as List<dynamic>;
+      } catch (e) {
+        debugPrint('Error converting cached route data: $e');
+      }
+    }
+
+    final url = 'https://maps.googleapis.com/maps/api/directions/json?'
+        'origin=${origin.latitude},${origin.longitude}&'
+        'destination=${destination.latitude},${destination.longitude}&'
+        'alternatives=true&'
+        'mode=$mode'
+        '${avoidAirPollution ? "&avoid=smog_zones" : ""}'
+        '&key=$apiKey';
+
+    final response = await _safeHttpGet(url, errorContext: 'getRoutePolylines');
+    if (response == null) return null;
+
+    final data = jsonDecode(response.body);
+    if (data['status'] != 'OK' || data['routes'].isEmpty) {
+      debugPrint('Route API error: ${data['status']}');
+      return [<LatLng>[], <LatLng>[], <Map<String, dynamic>>[], {'status': data['status']}];
+    }
+
+    try {
+      final route = _selectBestRoute(data['routes'], avoidAirPollution);
+      
+      final points = _decodePoly(route['overview_polyline']['points']);
+      final Set<Polyline> polylines = {
+        Polyline(
+          polylineId: const PolylineId('route'),
+          points: points,
+          color: _getColorForTransportMode(mode),
+          width: 5,
+        )
+      };
+
+      final List<dynamic> result = [
+        polylines,
+        <LatLng>[],
+        <Map<String, dynamic>>[],
+        {
+          'status': data['status'],
+          'cleanAirRoute': avoidAirPollution
+        }
+      ];
+
+      _addToCache(cacheKey, result);
+      return result;
+    } catch (e) {
+      debugPrint('Error processing route polyline: $e');
+      return null;
+    }
+  }
+  
+  dynamic _selectBestRoute(List<dynamic> routes, bool avoidAirPollution) {
+    if (!avoidAirPollution || routes.length <= 1) {
+      return routes[0];
+    }
+    
+
+    routes.sort((a, b) {
+      final distanceA = a['legs'][0]['distance']['value'] as int;
+      final distanceB = b['legs'][0]['distance']['value'] as int;
+      return distanceB.compareTo(distanceA);
+    });
+    
+    final shortestRoute = routes.last;
+    final longestRoute = routes.first;
+    
+    final shortestDistance = shortestRoute['legs'][0]['distance']['value'] as int;
+    final longestDistance = longestRoute['legs'][0]['distance']['value'] as int;
+    
+    if (routes.length >= 3 && longestDistance > shortestDistance * 1.5) {
+      return routes[1];
+    }
+    
+    return longestRoute;
   }
 
   Map<String, dynamic> _extractTransitDetail(Map<String, dynamic> step) {
@@ -652,57 +742,6 @@ class MapsService {
       'isOnboard': false,
     };
   }
-
-  Future<List<dynamic>?> _getStandardRoutePolylines(
-      LatLng origin, LatLng destination, String mode, String cacheKey) async {
-    final cachedResult = _getFromCache(cacheKey);
-    if (cachedResult != null) {
-      try {
-        return cachedResult as List<dynamic>;
-      } catch (e) {
-        debugPrint('Error converting cached route data: $e');
-      }
-    }
-
-    final url = 'https://maps.googleapis.com/maps/api/directions/json?'
-        'origin=${origin.latitude},${origin.longitude}&'
-        'destination=${destination.latitude},${destination.longitude}&'
-        'mode=$mode&key=$apiKey';
-
-    final response = await _safeHttpGet(url, errorContext: 'getRoutePolylines');
-    if (response == null) return null;
-
-    final data = jsonDecode(response.body);
-    if (data['status'] != 'OK' || data['routes'].isEmpty) {
-      debugPrint('Route API error: ${data['status']}');
-      return [<LatLng>[], <LatLng>[], <Map<String, dynamic>>[], {'status': data['status']}];
-    }
-
-    try {
-      final points = _decodePoly(data['routes'][0]['overview_polyline']['points']);
-      final Set<Polyline> polylines = {
-        Polyline(
-          polylineId: const PolylineId('route'),
-          points: points,
-          color: _getColorForTransportMode(mode),
-          width: 5,
-        )
-      };
-
-      final List<dynamic> result = [
-        polylines,
-        <LatLng>[],
-        <Map<String, dynamic>>[],
-        {'status': data['status']}
-      ];
-
-      _addToCache(cacheKey, result);
-      return result;
-    } catch (e) {
-      debugPrint('Error processing route polyline: $e');
-    return null;
-  }
-}
 
   void clearCache() {
     _cache.clear();

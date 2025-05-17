@@ -581,6 +581,7 @@ class StateManager {
         origin: origin,
         destination: destination,
         mode: mode,
+        avoidAirPollution: _state.showAirQuality,
       );
 
       if (result != null && result.isNotEmpty) {
@@ -613,35 +614,34 @@ class StateManager {
             }
           }
 
+          if (_state.showAirQuality && result.length >= 4 && result[3] is Map<String, dynamic>) {
+            final isCleanAirRoute = (result[3] as Map<String, dynamic>)['cleanAirRoute'] == true;
+            if (isCleanAirRoute && context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                content: Text('Using route that avoids high pollution areas'),
+                duration: const Duration(seconds: 3),
+                backgroundColor: Colors.green.shade700,
+              ));
+            }
+          }
+
           updateState((state) => state.copyWith(
             polylines: polylines,
             transitStops: transitStops,
             transitDetails: transitDetails,
             isLoading: false,
           ));
-        } else if (hasValidRoute) {
-          updateState((state) => state.copyWith(
-            polylines: {},
-            transitStops: {},
-            transitDetails: [],
-            isLoading: false,
-          ));
         } else {
-          await _updateAvailableModes();
           updateState((state) => state.copyWith(isLoading: false));
-          return false;
         }
-        return true;
-      } else {
-        await _updateAvailableModes();
-        updateState((state) => state.copyWith(isLoading: false));
-        return false;
+        return hasValidRoute;
       }
     } catch (e) {
       debugPrint('Error calculating route: $e');
-      updateState((state) => state.copyWith(isLoading: false));
-      return false;
     }
+
+    updateState((state) => state.copyWith(isLoading: false));
+    return false;
   }
 
   Future<void> updateTransportMode(String mode) async {
@@ -963,6 +963,7 @@ class StateManager {
         origin: origin,
         destination: destination,
         mode: mode,
+        avoidAirPollution: _state.showAirQuality,
       );
 
       bool isAvailable = result != null &&
@@ -1301,10 +1302,23 @@ class StateManager {
       destination: destination,
       mode: _state.transportMode,
       includeTransitDetails: _state.transportMode == 'transit',
+      avoidAirPollution: _state.showAirQuality,
     ).then((result) {
       if (result != null && result.isNotEmpty && result[0] is Set<Polyline>) {
         final polylines = result[0] as Set<Polyline>;
         final transitDetails = savedTransitDetails ?? (result.length > 2 ? result[2] as List<dynamic> : []);
+        
+        if (_state.showAirQuality && result.length >= 4 && result[3] is Map<String, dynamic>) {
+          final isCleanAirRoute = (result[3] as Map<String, dynamic>)['cleanAirRoute'] == true;
+          if (isCleanAirRoute && context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              content: Text('Using route that avoids high pollution areas'),
+              duration: const Duration(seconds: 3),
+              backgroundColor: Colors.green.shade700,
+            ));
+          }
+        }
+        
         updateState((state) => state.copyWith(
           polylines: polylines,
           isLoading: false,
@@ -1336,13 +1350,18 @@ class StateManager {
         transparency: 0.35,
       );
       _tileOverlays.add(airQualityOverlay);
-    } else {
     }
 
     updateState((state) => state.copyWith(
       tileOverlays: _tileOverlays,
       showAirQuality: showAirQuality,
     ));
+    
+    if (_state.destination != null) {
+      Future.delayed(const Duration(milliseconds: 300), () {
+        _updateRoute(preserveTransitDetails: true);
+      });
+    }
   }
   
   void cycleAirQualityMapType() {
